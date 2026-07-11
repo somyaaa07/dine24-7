@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { v4 as UUIDV4} from 'uuid'
-import {sequlize , Tenant , User , Role , AuditLog , RefreshToken } from '../models/index.js'
+import {sequelize , Tenant , User , Role , AuditLog , RefreshToken } from '../models/index.js'
 import { sendWelcomeEmail } from '../utils/email.utils.js'
 import jwt from 'jsonwebtoken';
 
@@ -19,7 +19,7 @@ export const register = async(req,res)=>{
             message:"Password must be greater then 8 letters"
         })
     }
-    const transaction = await sequlize.transaction()
+    const transaction = await sequelize.transaction()
     
     try{
 
@@ -34,7 +34,7 @@ export const register = async(req,res)=>{
                 where:{subdomain},
                 transaction,
             }
-        ),
+        );
 
         // checking if the existing sub domain present by timestamp as millisecond
         if(existingTenant){
@@ -42,7 +42,7 @@ export const register = async(req,res)=>{
         }
 
         // now create tenant 
-        const Tenant = await Tenant.create(
+        const newTenant = await Tenant.create(
             {
                 id: UUIDV4(),
                 name:resturant_name,
@@ -66,7 +66,7 @@ export const register = async(req,res)=>{
            [
             {
                 name:"owner",
-                tenant_id:tenant.id,
+                tenant_id:newTenant.id,
                 permissions:JSON.stringify(
                     {
                         all:true
@@ -75,7 +75,7 @@ export const register = async(req,res)=>{
             },
             {
                 name:"manager",
-                tenant_id:tenant.id,
+                tenant_id:newTenant.id,
                 permissions:JSON.stringify({
                     order:true,
                     inventory:true,
@@ -87,7 +87,7 @@ export const register = async(req,res)=>{
             },
             {
                 name:"waiter",
-                tenant_id:tenant.id,
+                tenant_id:newTenant.id,
                 permissions:JSON.stringify(
                  {
                        order:true,
@@ -100,7 +100,7 @@ export const register = async(req,res)=>{
 
             {
                 name:"chef",
-                tenant_id:tenant.id,
+                tenant_id:newTenant.id,
                 permissions:JSON.stringify({
                     kitchen:true,
                     menu:["read"]
@@ -119,7 +119,7 @@ export const register = async(req,res)=>{
         const user = await User.create(
             {
                 id:UUIDV4(),
-                tenant_id:tenant.id,
+                tenant_id:newTenant.id,
                 name:owner_name,
                 email,
                 password_hash,
@@ -135,7 +135,7 @@ export const register = async(req,res)=>{
         // creating this for having the records of any 
         await AuditLog.create(
             {
-                tenant_id:tenant.id,
+                tenant_id:newTenant.id,
                 user_id:user.id,
                 action:"TENANT REGISTER",
                 ip_address:req.ip
@@ -158,8 +158,8 @@ export const register = async(req,res)=>{
             success:true,
             message:"Resturnant registered successfully",
             data:{
-                tenant_id:tenant.id,
-                subdomain:`${subdomain}.deox.com`
+                tenant_id:newTenant.id,
+                subdomain:`${subdomain}.debox.com`
             }
         })
     }
@@ -177,14 +177,13 @@ export const register = async(req,res)=>{
 }
 
 export const login = async(req,res)=>{
-    const {email,password, tenant_id} = req.body;
+    const {email,password} = req.body;
 
     //find the user first
     try{
         const user = await User.findOne({
             where:{
                 email,
-                tenant_id,
                 is_active:true
             },
            include:[
@@ -203,13 +202,13 @@ export const login = async(req,res)=>{
         }
 
         // verify the password
-        const isPasswordValid = await bcrypt.compare(password,user.password);
+        const isPasswordValid = await bcrypt.compare(password,user.password_hash);
 
         // if password is not valid
         if(!isPasswordValid){
             return res.status(401).json({
                 success:false,
-                messgae:"the password is not valid or incorrect"
+                message:"the password is not valid or incorrect"
             });
         }
 
@@ -222,13 +221,14 @@ export const login = async(req,res)=>{
                 message:"Tenant is got suspended ! kindly renew it to continue"
             });
         }
-
+  const roleName = user.Role.name;
+    const rolePermissions = user.Role.permissions;
         const accessToken = jwt.sign(
             {
                 user_id:user.id,
                 tenant_id:user.tenant_id,
-                role:user.Role.name,
-                permissions:user.Role.permissions
+                role:roleName,
+                permissions:rolePermissions
             },
             process.env.JWT_SECRET,
             {
@@ -273,7 +273,7 @@ export const login = async(req,res)=>{
         });
 
         return res.status(200).json({
-            sucess:true,
+            success:true,
             data:{
                access_token:accessToken,
                refresh_token:refreshToken,
@@ -281,8 +281,8 @@ export const login = async(req,res)=>{
                 id:user.id,
                 name:user.name,
                 email:user.email,
-                role:user.role.name,
-                permissions:user.role.permissions,
+                role:roleName,
+                permissions:rolePermissions,
                }
             }
            
@@ -305,7 +305,7 @@ export const logout = async(req,res)=>{
     
     if(!refreshToken){
         return res.status(400).json({
-            sucess:false,
+            success:false,
             message:"refresh token is required"
         })
     };
@@ -373,14 +373,14 @@ export const refreshToken = async(req,res)=>{
     try{
         let decoded ;
         try{
-            decoded = jwt.verify(refresh_Token,process.env.REFRESH_TOKEN_SECRET);    
+            decoded = jwt.verify(refresh_Token,process.env.JWT_REFRESH_SECRET);    
         }catch(err){
             return res.status(400).json({
                 success:false,
                 message:"Refresh Token is expired"
             });
         }
-            const tokens = await TokenExpiredError.findAll({where:{user_id:decoded.user_id}})
+            const tokens = await RefreshToken.findAll({where:{user_id:decoded.user_id}})
             let matchedToken = null ;
             for (const t of tokens ) {
                 const isMatch = await bcrypt.compare(refresh_Token,t.token);
@@ -419,9 +419,9 @@ export const refreshToken = async(req,res)=>{
 
             const newAccessToken = jwt.sign({
                 user_id:user.id,
-                role:user.role.name,
+                role:user.Role.name,
                 tenant_id:user.tenant_id,
-                permissions:user.role.permissions
+                permissions:user.Role.permissions
             },
         process.env.JWT_SECRET,
     {expiresIn:"15m"});

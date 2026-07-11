@@ -9,7 +9,8 @@ import cookieParser from 'cookie-parser';
 
 import {connectDB , sequelize} from './config/database.js';
 import authRoutes from './routes/auth.routes.js';
-
+import dashboardRoutes from './routes/dashboard.route.js'
+import resturantRoutes from './routes/resturant.route.js'
 const app = express();
 
 app.use(helmet()); //security 
@@ -26,6 +27,8 @@ app.use(cookieParser());
 
 
 app.use('/api/v1/auth',authRoutes);
+app.use('/api/v1/dashboard',dashboardRoutes);
+app.use('/api/v1/restaurant',resturantRoutes);
 
 //Health check
 app.get("/health", (req, res) => {
@@ -58,7 +61,7 @@ const startServer = async () =>{
         await connectDB();
 
         //table sync
-        await sequelize.sync({alter:true});
+        await sequelize.sync();
         console.log("Database now synced")
 
         // server start

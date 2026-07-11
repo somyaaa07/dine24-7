@@ -4,6 +4,7 @@ import Tenant from "./tenant.model.js";
 import User from "./user.model.js";
 import AuditLog from "./auditLog.model.js";
 import RefreshToken from "./refreshToken.model.js";
+import ResturantProfile from './resturant.model.js';
 
 //relationship management
 
@@ -16,8 +17,8 @@ Tenant.hasMany(Role,{foreignKey:"tenant_id"});
 Role.belongsTo(Tenant,{foreignKey:"tenant_id"});
 
 //relationship between role and user that one user has many role
-User.hasMany(Role,{foreignKey:"role_id"});
-Role.belongsTo(User,{foreignKey:"role_id"});
+Role.hasMany(User,{foreignKey:"role_id"});
+User.belongsTo(Role,{foreignKey:"role_id"});
 
 //user and refreshtoken . one user can have many refresh tokens
 User.hasMany(RefreshToken,{foreignKey:"user_id"});
@@ -31,12 +32,17 @@ AuditLog.belongsTo(User,{foreignKey:"user_id"});
 Tenant.hasMany(AuditLog,{foreignKey:"tenant_id"});
 AuditLog.belongsTo(Tenant,{foreignKey:"tenant_id"})
 
+//relationship between resturant profile and tenant as one tenant has many resturant profiles
+Tenant.hasMany(ResturantProfile,{foreignKey:"tenant_id"});
+ResturantProfile.belongsTo(Tenant,{foreignKey:"tenant_id"});
 
-export default {
+
+export {
   sequelize,
   Tenant,
   User,
   Role,
   RefreshToken,
   AuditLog,
+  ResturantProfile,
 };

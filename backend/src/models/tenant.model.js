@@ -41,7 +41,7 @@ Tenant.init(
         sequelize,
         modelName:'Tenant',
         tableName:'tenants',
-        timestamps
+        timestamps:true
 
     }
 )
