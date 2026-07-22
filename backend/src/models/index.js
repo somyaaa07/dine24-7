@@ -5,6 +5,11 @@ import User from "./user.model.js";
 import AuditLog from "./auditLog.model.js";
 import RefreshToken from "./refreshToken.model.js";
 import ResturantProfile from './resturant.model.js';
+import Tables from './tables.model.js';
+import MenuCategory from "./menuCategory.model.js";
+import MenuItem from "./menuItem.model.js";
+import MenuVariant from "./menuVariant.model.js";
+
 
 //relationship management
 
@@ -36,6 +41,24 @@ AuditLog.belongsTo(Tenant,{foreignKey:"tenant_id"})
 Tenant.hasMany(ResturantProfile,{foreignKey:"tenant_id"});
 ResturantProfile.belongsTo(Tenant,{foreignKey:"tenant_id"});
 
+Tenant.hasMany(Tables,{foreignKey:"tenant_id"});
+Tables.belongsTo(Tenant,{foreignKey:"tenant_id"});
+
+Tenant.hasMany(MenuCategory,{foreignKey:"tenant_id"});
+MenuCategory.belongsTo(Tenant,{foreignKey:"tenant_id"});
+
+MenuCategory.hasMany(MenuItem,{foreignKey:"category_id"});
+MenuItem.belongsTo(MenuCategory,{foreignKey:"category_id"});
+
+Tenant.hasMany(MenuItem,{foreignKey:"tenant_id"});
+MenuItem.belongsTo(Tenant,{foreignKey:"tenant_id"});
+
+MenuItem.hasMany(MenuVariant,{foreignKey:"menu_item_id"});
+MenuVariant.belongsTo(MenuItem,{foreignKey:"menu_item_id"});
+
+Tenant.hasMany(MenuVariant,{foreignKey:"tenant_id"});
+MenuVariant.belongsTo(Tenant,{foreignKey:"tenant_id"});
+
 
 export {
   sequelize,
@@ -45,4 +68,8 @@ export {
   RefreshToken,
   AuditLog,
   ResturantProfile,
+  Tables,
+  MenuCategory,
+  MenuItem,
+  MenuVariant,
 };

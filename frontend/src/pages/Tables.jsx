@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
 const STATUS_COLORS = {
-  available: { bg: '#f0fdf4', color: '#16a34a', label: 'Available' },
-  occupied:  { bg: '#fef3c7', color: '#d97706', label: 'Occupied'  },
-  reserved:  { bg: '#eff6ff', color: '#2563eb', label: 'Reserved'  },
-  cleaning:  { bg: '#fdf4ff', color: '#9333ea', label: 'Cleaning'  },
+  available: { bg: '#F0F7EE', color: '#3F7D33', label: 'Available' },
+  occupied:  { bg: '#FBF3E6', color: '#A97E44', label: 'Occupied'  },
+  reserved:  { bg: '#EDF1F5', color: '#3B5170', label: 'Reserved'  },
+  cleaning:  { bg: '#F5EEF3', color: '#7A4B6B', label: 'Cleaning'  },
 };
 
 const Tables = () => {
@@ -48,12 +48,12 @@ const Tables = () => {
     e.preventDefault();
     try {
       await api.post('/tables', form);
-      showMsg('success', `Table ${form.table_number} create ho gaya!`);
+      showMsg('success', `Table ${form.table_number} created!`);
       setForm({ table_number: '', section: 'Main Hall', capacity: 4 });
       setShowForm(false);
       fetchTables();
     } catch (err) {
-      showMsg('error', err.response?.data?.message || 'Create nahi hua');
+      showMsg('error', err.response?.data?.message || 'Could not create table');
     }
   };
 
@@ -68,11 +68,11 @@ const Tables = () => {
         capacity:    Number(bulk.capacity),
       });
       const d = res.data.data;
-      showMsg('success', `${d.created} tables create ho gaye!`);
+      showMsg('success', `${d.created} tables created!`);
       setShowBulk(false);
       fetchTables();
     } catch (err) {
-      showMsg('error', err.response?.data?.message || 'Bulk not created');
+      showMsg('error', err.response?.data?.message || 'Bulk create failed');
     }
   };
 
@@ -82,36 +82,138 @@ const Tables = () => {
       await api.put(`/tables/${id}/status`, { status });
       fetchTables();
     } catch (err) {
-      showMsg('error', err.response?.data?.message || 'Status change nahi hua');
+      showMsg('error', err.response?.data?.message || 'Could not update status');
     }
   };
 
   // Delete
   const handleDelete = async (id, table_number) => {
-    if (!window.confirm(`Table ${table_number} delete karna chahte ho?`)) return;
+    if (!window.confirm(`Delete table ${table_number}?`)) return;
     try {
       await api.delete(`/tables/${id}`);
-      showMsg('success', `Table ${table_number} delete ho gayi`);
+      showMsg('success', `Table ${table_number} deleted`);
       fetchTables();
     } catch (err) {
-      showMsg('error', err.response?.data?.message || 'Delete nahi hua');
+      showMsg('error', err.response?.data?.message || 'Could not delete table');
     }
   };
 
-  if (loading) return <div style={styles.centered}><p>Load ho raha hai...</p></div>;
+  const GlobalStyle = () => (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+      .rtbl-outline-btn {
+        font-family: 'JetBrains Mono', monospace;
+        background: #FFFFFF;
+        border: 1px solid #D8D1C2;
+        color: #1A1815;
+        border-radius: 4px;
+        padding: 9px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: border-color 0.15s ease, background 0.15s ease;
+      }
+      .rtbl-outline-btn:hover { border-color: #A97E44; background: #FBF8F2; }
+
+      .rtbl-primary-btn {
+        font-family: 'JetBrains Mono', monospace;
+        background: #1A1815;
+        color: #F7F5F0;
+        border: none;
+        border-radius: 4px;
+        padding: 9px 16px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .rtbl-primary-btn:hover { background: #A97E44; }
+
+      .rtbl-input {
+        font-family: 'JetBrains Mono', monospace;
+        border: none;
+        border-bottom: 2px solid #D8D1C2;
+        background: transparent;
+        padding: 8px 2px;
+        font-size: 13.5px;
+        color: #1A1815;
+        outline: none;
+        transition: border-color 0.15s ease;
+      }
+      .rtbl-input:focus { border-bottom-color: #A97E44; }
+
+      .rtbl-select {
+        font-family: 'JetBrains Mono', monospace;
+        width: 100%;
+        border: 1px solid #D8D1C2;
+        border-radius: 4px;
+        padding: 7px 8px;
+        font-size: 12.5px;
+        color: #1A1815;
+        background: #FFFFFF;
+        outline: none;
+        margin-bottom: 10px;
+        cursor: pointer;
+      }
+      .rtbl-select:focus { border-color: #A97E44; }
+
+      .rtbl-delete-btn {
+        font-family: 'JetBrains Mono', monospace;
+        width: 100%;
+        background: #FBEEEB;
+        color: #B33F2C;
+        border: 1px solid #EBC7BC;
+        border-radius: 4px;
+        padding: 7px;
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .rtbl-delete-btn:hover { background: #F6DFD9; }
+
+      .rtbl-table-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+      .rtbl-table-card:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(26,24,21,0.08); }
+
+      @media (max-width: 640px) {
+        .rtbl-top-bar { flex-direction: column !important; align-items: flex-start !important; gap: 14px; }
+        .rtbl-header-btns { width: 100%; }
+        .rtbl-header-btns button { flex: 1; }
+      }
+    `}</style>
+  );
+
+  if (loading) {
+    return (
+      <div style={styles.centered}>
+        <GlobalStyle />
+        <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', color: '#7A7264', letterSpacing: '0.04em' }}>
+          LOADING…
+        </p>
+      </div>
+    );
+  }
 
   const allSections = Object.keys(grouped);
 
   return (
     <div style={styles.page}>
+      <GlobalStyle />
 
       {/* Header */}
-      <div style={styles.topBar}>
-        <h1 style={styles.title}>Tables Management</h1>
-        <div style={styles.headerBtns}>
-          <button onClick={() => navigate('/dashboard')} style={styles.outlineBtn}>← Dashboard</button>
-          <button onClick={() => { setShowBulk(true); setShowForm(false); }} style={styles.outlineBtn}>+ Bulk Add</button>
-          <button onClick={() => { setShowForm(true); setShowBulk(false); }} style={styles.primaryBtn}>+ Table Add</button>
+      <div className="rtbl-top-bar" style={styles.topBar}>
+        <div>
+          <span style={styles.eyebrow}>FLOOR PLAN</span>
+          <h1 style={styles.title}>Tables Management</h1>
+        </div>
+        <div className="rtbl-header-btns" style={styles.headerBtns}>
+          <button onClick={() => navigate('/dashboard')} className="rtbl-outline-btn">← Dashboard</button>
+          <button onClick={() => { setShowBulk(true); setShowForm(false); }} className="rtbl-outline-btn">+ Bulk Add</button>
+          <button onClick={() => { setShowForm(true); setShowBulk(false); }} className="rtbl-primary-btn">+ Add Table</button>
         </div>
       </div>
 
@@ -125,26 +227,27 @@ const Tables = () => {
       {/* Single Create Form */}
       {showForm && (
         <div style={styles.formCard}>
-          <h3 style={styles.formTitle}>Naya Table Add Karo</h3>
+          <div style={styles.perforation} />
+          <h3 style={styles.formTitle}>Add New Table</h3>
           <form onSubmit={handleCreate} style={styles.formRow}>
             <div style={styles.formField}>
               <label style={styles.label}>Table Number *</label>
               <input value={form.table_number} onChange={e => setForm({ ...form, table_number: e.target.value })}
-                placeholder="T1" style={styles.input} required />
+                placeholder="T1" className="rtbl-input" required />
             </div>
             <div style={styles.formField}>
               <label style={styles.label}>Section</label>
               <input value={form.section} onChange={e => setForm({ ...form, section: e.target.value })}
-                placeholder="Main Hall" style={styles.input} />
+                placeholder="Main Hall" className="rtbl-input" />
             </div>
             <div style={styles.formField}>
               <label style={styles.label}>Capacity</label>
               <input type="number" value={form.capacity} min={1}
-                onChange={e => setForm({ ...form, capacity: Number(e.target.value) })} style={styles.input} />
+                onChange={e => setForm({ ...form, capacity: Number(e.target.value) })} className="rtbl-input" />
             </div>
             <div style={styles.formActions}>
-              <button type="submit" style={styles.primaryBtn}>Create</button>
-              <button type="button" onClick={() => setShowForm(false)} style={styles.outlineBtn}>Cancel</button>
+              <button type="submit" className="rtbl-primary-btn">Create</button>
+              <button type="button" onClick={() => setShowForm(false)} className="rtbl-outline-btn">Cancel</button>
             </div>
           </form>
         </div>
@@ -153,37 +256,38 @@ const Tables = () => {
       {/* Bulk Create Form */}
       {showBulk && (
         <div style={styles.formCard}>
-          <h3 style={styles.formTitle}>Bulk Tables Add Karo</h3>
+          <div style={styles.perforation} />
+          <h3 style={styles.formTitle}>Add Tables in Bulk</h3>
           <p style={styles.hint}>Example: Prefix=T, From=1, To=10 → T1, T2... T10</p>
           <form onSubmit={handleBulkCreate} style={styles.formRow}>
             <div style={styles.formField}>
               <label style={styles.label}>Prefix</label>
               <input value={bulk.prefix} onChange={e => setBulk({ ...bulk, prefix: e.target.value })}
-                placeholder="T" style={styles.input} />
+                placeholder="T" className="rtbl-input" />
             </div>
             <div style={styles.formField}>
               <label style={styles.label}>From</label>
               <input type="number" value={bulk.from_number} min={1}
-                onChange={e => setBulk({ ...bulk, from_number: e.target.value })} style={styles.input} />
+                onChange={e => setBulk({ ...bulk, from_number: e.target.value })} className="rtbl-input" />
             </div>
             <div style={styles.formField}>
               <label style={styles.label}>To</label>
               <input type="number" value={bulk.to_number} min={1}
-                onChange={e => setBulk({ ...bulk, to_number: e.target.value })} style={styles.input} />
+                onChange={e => setBulk({ ...bulk, to_number: e.target.value })} className="rtbl-input" />
             </div>
             <div style={styles.formField}>
               <label style={styles.label}>Section</label>
               <input value={bulk.section} onChange={e => setBulk({ ...bulk, section: e.target.value })}
-                style={styles.input} />
+                className="rtbl-input" />
             </div>
             <div style={styles.formField}>
               <label style={styles.label}>Capacity</label>
               <input type="number" value={bulk.capacity} min={1}
-                onChange={e => setBulk({ ...bulk, capacity: e.target.value })} style={styles.input} />
+                onChange={e => setBulk({ ...bulk, capacity: e.target.value })} className="rtbl-input" />
             </div>
             <div style={styles.formActions}>
-              <button type="submit" style={styles.primaryBtn}>Create</button>
-              <button type="button" onClick={() => setShowBulk(false)} style={styles.outlineBtn}>Cancel</button>
+              <button type="submit" className="rtbl-primary-btn">Create</button>
+              <button type="button" onClick={() => setShowBulk(false)} className="rtbl-outline-btn">Cancel</button>
             </div>
           </form>
         </div>
@@ -192,8 +296,10 @@ const Tables = () => {
       {/* Tables Section Wise */}
       {allSections.length === 0 ? (
         <div style={styles.emptyState}>
-          <p>Abhi koi table nahi hai.</p>
-          <p style={{ color: '#9ca3af', fontSize: '14px' }}>Upar "+ Table Add" ya "+ Bulk Add" se tables banao.</p>
+          <p style={{ margin: '0 0 6px', color: '#1A1815', fontSize: '14px' }}>No tables yet.</p>
+          <p style={{ color: '#B9B0A0', fontSize: '13px', margin: 0 }}>
+            Use "+ Add Table" or "+ Bulk Add" above to create tables.
+          </p>
         </div>
       ) : (
         allSections.map(section => (
@@ -203,7 +309,8 @@ const Tables = () => {
               {grouped[section].map(table => {
                 const s = STATUS_COLORS[table.status] || STATUS_COLORS.available;
                 return (
-                  <div key={table.id} style={styles.tableCard}>
+                  <div key={table.id} className="rtbl-table-card" style={styles.tableCard}>
+                    <div style={styles.tableClip} />
                     <div style={styles.tableTop}>
                       <span style={styles.tableNumber}>{table.table_number}</span>
                       <span style={{ ...styles.badge, background: s.bg, color: s.color }}>
@@ -216,7 +323,7 @@ const Tables = () => {
                     <select
                       value={table.status}
                       onChange={e => handleStatusChange(table.id, e.target.value)}
-                      style={styles.select}
+                      className="rtbl-select"
                     >
                       <option value="available">Available</option>
                       <option value="occupied">Occupied</option>
@@ -226,7 +333,7 @@ const Tables = () => {
 
                     <button
                       onClick={() => handleDelete(table.id, table.table_number)}
-                      style={styles.deleteBtn}
+                      className="rtbl-delete-btn"
                     >
                       Delete
                     </button>
@@ -242,35 +349,46 @@ const Tables = () => {
 };
 
 const styles = {
-  page:          { padding: '24px', background: '#f8fafc', minHeight: '100vh' },
-  centered:      { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' },
-  topBar:        { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
-  title:         { fontSize: '22px', fontWeight: '600', color: '#1e293b', margin: '0' },
-  headerBtns:    { display: 'flex', gap: '8px' },
-  primaryBtn:    { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
-  outlineBtn:    { background: '#fff', border: '1px solid #d1d5db', color: '#374151', borderRadius: '8px', padding: '9px 18px', fontSize: '14px', cursor: 'pointer' },
-  msg:           { padding: '10px 16px', borderRadius: '8px', fontSize: '14px', marginBottom: '16px' },
-  msgSuccess:    { background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a' },
-  msgError:      { background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' },
-  formCard:      { background: '#fff', borderRadius: '10px', padding: '20px', marginBottom: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
-  formTitle:     { fontSize: '16px', fontWeight: '600', margin: '0 0 12px', color: '#1e293b' },
-  formRow:       { display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' },
-  formField:     { display: 'flex', flexDirection: 'column', minWidth: '130px' },
-  formActions:   { display: 'flex', gap: '8px', alignItems: 'center', paddingTop: '20px' },
-  label:         { fontSize: '12px', fontWeight: '500', color: '#374151', marginBottom: '4px' },
-  input:         { border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px', fontSize: '14px', outline: 'none' },
-  hint:          { fontSize: '13px', color: '#9ca3af', margin: '0 0 12px' },
-  section:       { marginBottom: '28px' },
-  sectionTitle:  { fontSize: '16px', fontWeight: '600', color: '#475569', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #e2e8f0' },
-  tablesGrid:    { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' },
-  tableCard:     { background: '#fff', borderRadius: '10px', padding: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
+  page:     { padding: '32px', background: '#F7F5F0', minHeight: '100vh', fontFamily: "'JetBrains Mono', monospace" },
+  centered: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F7F5F0' },
+
+  topBar:      { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' },
+  eyebrow:     { display: 'inline-block', fontSize: '11px', fontWeight: '700', letterSpacing: '0.14em', color: '#A97E44', marginBottom: '6px' },
+  title:       { fontFamily: "'Bebas Neue', sans-serif", fontSize: '30px', letterSpacing: '0.01em', color: '#1A1815', margin: 0 },
+  headerBtns:  { display: 'flex', gap: '10px' },
+
+  msg:        { padding: '10px 16px', borderRadius: '4px', fontSize: '12.5px', fontWeight: '500', marginBottom: '18px' },
+  msgSuccess: { background: '#F0F7EE', border: '1px solid #CFE3C6', color: '#3F7D33' },
+  msgError:   { background: '#FBEEEB', border: '1px solid #EBC7BC', color: '#B33F2C' },
+
+  formCard:    { background: '#FFFFFF', borderRadius: '6px', border: '1px solid #E9E3D6', padding: '22px', marginBottom: '22px', boxShadow: '0 1px 2px rgba(26,24,21,0.03)', position: 'relative' },
+  perforation: {
+    position: 'absolute', top: '-1px', left: 0, right: 0, height: '3px',
+    background: 'repeating-linear-gradient(to right, #E9E3D6 0, #E9E3D6 6px, transparent 6px, transparent 12px)',
+    borderTopLeftRadius: '6px', borderTopRightRadius: '6px'
+  },
+  formTitle:   { fontFamily: "'Bebas Neue', sans-serif", fontSize: '20px', letterSpacing: '0.01em', margin: '0 0 14px', color: '#1A1815' },
+  formRow:     { display: 'flex', gap: '18px', alignItems: 'flex-end', flexWrap: 'wrap' },
+  formField:   { display: 'flex', flexDirection: 'column', minWidth: '130px' },
+  formActions: { display: 'flex', gap: '10px', alignItems: 'center', paddingTop: '18px' },
+  label:       { fontSize: '10.5px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7A7264', marginBottom: '8px' },
+  hint:        { fontSize: '12px', color: '#B9B0A0', margin: '0 0 14px' },
+
+  section:      { marginBottom: '30px' },
+  sectionTitle: {
+    fontFamily: "'Bebas Neue', sans-serif", fontSize: '19px', letterSpacing: '0.02em',
+    color: '#1A1815', marginBottom: '14px', paddingBottom: '8px', borderBottom: '1px dashed #D8D1C2'
+  },
+  tablesGrid:   { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '14px' },
+
+  tableCard:     { background: '#FFFFFF', borderRadius: '6px', border: '1px solid #E9E3D6', padding: '16px', boxShadow: '0 1px 2px rgba(26,24,21,0.03)', position: 'relative', overflow: 'hidden' },
+  tableClip:     { position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#A97E44' },
   tableTop:      { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' },
-  tableNumber:   { fontSize: '18px', fontWeight: '700', color: '#1e293b' },
-  badge:         { fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '999px' },
-  tableCapacity: { fontSize: '13px', color: '#64748b', margin: '0 0 10px' },
-  select:        { width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '6px 8px', fontSize: '13px', marginBottom: '8px', outline: 'none' },
-  deleteBtn:     { width: '100%', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', padding: '6px', fontSize: '12px', cursor: 'pointer' },
-  emptyState:    { textAlign: 'center', padding: '60px 20px', color: '#475569' },
+  tableNumber:   { fontFamily: "'Bebas Neue', sans-serif", fontSize: '22px', letterSpacing: '0.02em', color: '#1A1815' },
+  badge:         { fontSize: '10px', fontWeight: '700', letterSpacing: '0.04em', padding: '3px 9px', borderRadius: '999px', textTransform: 'uppercase' },
+  tableCapacity: { fontSize: '12.5px', color: '#7A7264', margin: '0 0 12px' },
+
+  emptyState: { textAlign: 'center', padding: '70px 20px' },
 };
 
 export default Tables;

@@ -9,14 +9,16 @@ import cookieParser from 'cookie-parser';
 
 import {connectDB , sequelize} from './config/database.js';
 import authRoutes from './routes/auth.routes.js';
-import dashboardRoutes from './routes/dashboard.route.js'
-import resturantRoutes from './routes/resturant.route.js'
+import dashboardRoutes from './routes/dashboard.route.js';
+import resturantRoutes from './routes/resturant.route.js';
+import tableRoutes from './routes/table.routes.js';
+
 const app = express();
 
 app.use(helmet()); //security 
 app.use(morgan('dev')); //logging
 app.use(cors({
-    origin:'http://localhost:3000' || process.env.FRONTEND_URL,
+    origin:'http://localhost:5173' || process.env.APP_URL,
     credentials:true
 }))
 
@@ -29,6 +31,7 @@ app.use(cookieParser());
 app.use('/api/v1/auth',authRoutes);
 app.use('/api/v1/dashboard',dashboardRoutes);
 app.use('/api/v1/restaurant',resturantRoutes);
+app.use('/api/v1/tables',tableRoutes);
 
 //Health check
 app.get("/health", (req, res) => {

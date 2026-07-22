@@ -80,15 +80,125 @@ const RestaurantSetup = () => {
       setSaving(true);
       setMsg({ type: '', text: '' });
       await api.put('/restaurant/profile', form);
-      setMsg({ type: 'success', text: '✅ Profile save ho gayi!' });
+      setMsg({ type: 'success', text: '✅ Profile saved!' });
     } catch (err) {
-      setMsg({ type: 'error', text: err.response?.data?.message || 'Save nahi hua' });
+      setMsg({ type: 'error', text: err.response?.data?.message || 'Save failed' });
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <div style={styles.centered}><p>Load ho raha hai...</p></div>;
+  const GlobalStyle = () => (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+      .rsetup-back-btn {
+        font-family: 'JetBrains Mono', monospace;
+        background: #FFFFFF;
+        border: 1px solid #D8D1C2;
+        color: #1A1815;
+        padding: 9px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        transition: border-color 0.15s ease, background 0.15s ease;
+      }
+      .rsetup-back-btn:hover { border-color: #A97E44; background: #FBF8F2; }
+
+      .rsetup-tab {
+        font-family: 'JetBrains Mono', monospace;
+        padding: 10px 18px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #7A7264;
+        margin-bottom: -1px;
+        transition: color 0.15s ease, border-color 0.15s ease;
+      }
+      .rsetup-tab:hover { color: #1A1815; }
+      .rsetup-tab-active { border-bottom-color: #A97E44 !important; color: #1A1815 !important; }
+
+      .rsetup-input {
+        font-family: 'JetBrains Mono', monospace;
+        width: 100%;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid #D8D1C2;
+        padding: 9px 2px;
+        font-size: 14px;
+        color: #1A1815;
+        outline: none;
+        box-sizing: border-box;
+        transition: border-color 0.15s ease;
+      }
+      .rsetup-input::placeholder { color: #B9B0A0; }
+      .rsetup-input:focus { border-bottom-color: #A97E44; }
+      select.rsetup-input { cursor: pointer; }
+      textarea.rsetup-input { border: 1px solid #D8D1C2; border-radius: 4px; padding: 10px; }
+      textarea.rsetup-input:focus { border-color: #A97E44; }
+
+      .rsetup-time {
+        font-family: 'JetBrains Mono', monospace;
+        border: 1px solid #D8D1C2;
+        border-radius: 4px;
+        padding: 6px 10px;
+        font-size: 12.5px;
+        color: #1A1815;
+        background: #FFFFFF;
+      }
+      .rsetup-time:focus { outline: none; border-color: #A97E44; }
+
+      .rsetup-check {
+        accent-color: #A97E44;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+      }
+
+      .rsetup-save-btn {
+        font-family: 'JetBrains Mono', monospace;
+        background: #1A1815;
+        color: #F7F5F0;
+        border: none;
+        border-radius: 3px;
+        padding: 13px 26px;
+        font-size: 12.5px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: background 0.15s ease, transform 0.1s ease;
+      }
+      .rsetup-save-btn:hover:not(:disabled) { background: #A97E44; }
+      .rsetup-save-btn:active:not(:disabled) { transform: scale(0.99); }
+      .rsetup-save-btn:disabled { cursor: not-allowed; }
+
+      @media (max-width: 640px) {
+        .rsetup-two-col, .rsetup-three-col { grid-template-columns: 1fr !important; }
+        .rsetup-top-bar { flex-direction: column !important; align-items: flex-start !important; gap: 14px; }
+        .rsetup-tabs { overflow-x: auto; }
+      }
+    `}</style>
+  );
+
+  if (loading) {
+    return (
+      <div style={styles.centered}>
+        <GlobalStyle />
+        <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', color: '#7A7264', letterSpacing: '0.04em' }}>
+          LOADING…
+        </p>
+      </div>
+    );
+  }
 
   const tabs = [
     { id: 'basic',   label: 'Basic Info' },
@@ -99,22 +209,34 @@ const RestaurantSetup = () => {
 
   return (
     <div style={styles.page}>
-      <div style={styles.topBar}>
-        <h1 style={styles.title}>Restaurant Setup</h1>
-        <button onClick={() => navigate('/dashboard')} style={styles.backBtn}>← Dashboard</button>
+      <GlobalStyle />
+
+      <div className="rsetup-top-bar" style={styles.topBar}>
+        <div>
+          <span style={styles.eyebrow}>RESTAURANT PROFILE</span>
+          <h1 style={styles.title}>Restaurant Setup</h1>
+        </div>
+        <button onClick={() => navigate('/dashboard')} className="rsetup-back-btn">
+          ← Dashboard
+        </button>
       </div>
 
       {/* Tabs */}
-      <div style={styles.tabs}>
+      <div className="rsetup-tabs" style={styles.tabs}>
         {tabs.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)}
-            style={{ ...styles.tab, ...(activeTab === t.id ? styles.tabActive : {}) }}>
+          <button
+            key={t.id}
+            onClick={() => setActiveTab(t.id)}
+            className={`rsetup-tab ${activeTab === t.id ? 'rsetup-tab-active' : ''}`}
+          >
             {t.label}
           </button>
         ))}
       </div>
 
       <div style={styles.card}>
+        <div style={styles.perforation} />
+
         {/* Message */}
         {msg.text && (
           <div style={{ ...styles.msg, ...(msg.type === 'success' ? styles.msgSuccess : styles.msgError) }}>
@@ -125,29 +247,29 @@ const RestaurantSetup = () => {
         {/* Basic Info */}
         {activeTab === 'basic' && (
           <div>
-            <Field label="Restaurant Ka Naam *">
-              <input name="restaurant_name" value={form.restaurant_name} onChange={handleChange} style={styles.input} />
+            <Field label="Restaurant Name *">
+              <input name="restaurant_name" value={form.restaurant_name} onChange={handleChange} className="rsetup-input" />
             </Field>
-            <div style={styles.twoCol}>
+            <div className="rsetup-two-col" style={styles.twoCol}>
               <Field label="Phone">
-                <input name="phone" value={form.phone || ''} onChange={handleChange} style={styles.input} />
+                <input name="phone" value={form.phone || ''} onChange={handleChange} className="rsetup-input" />
               </Field>
               <Field label="Email">
-                <input type="email" name="email" value={form.email || ''} onChange={handleChange} style={styles.input} />
+                <input type="email" name="email" value={form.email || ''} onChange={handleChange} className="rsetup-input" />
               </Field>
             </div>
             <Field label="Address">
-              <textarea name="address" value={form.address || ''} onChange={handleChange} rows={2} style={{ ...styles.input, resize: 'vertical' }} />
+              <textarea name="address" value={form.address || ''} onChange={handleChange} rows={2} className="rsetup-input" style={{ resize: 'vertical' }} />
             </Field>
-            <div style={styles.threeCol}>
+            <div className="rsetup-three-col" style={styles.threeCol}>
               <Field label="City">
-                <input name="city" value={form.city || ''} onChange={handleChange} style={styles.input} />
+                <input name="city" value={form.city || ''} onChange={handleChange} className="rsetup-input" />
               </Field>
               <Field label="State">
-                <input name="state" value={form.state || ''} onChange={handleChange} style={styles.input} />
+                <input name="state" value={form.state || ''} onChange={handleChange} className="rsetup-input" />
               </Field>
               <Field label="Pincode">
-                <input name="pincode" value={form.pincode || ''} onChange={handleChange} style={styles.input} />
+                <input name="pincode" value={form.pincode || ''} onChange={handleChange} className="rsetup-input" />
               </Field>
             </div>
           </div>
@@ -158,30 +280,30 @@ const RestaurantSetup = () => {
           <div>
             <Field label="GSTIN Number">
               <input name="gstin" value={form.gstin || ''} onChange={handleChange}
-                maxLength={15} placeholder="22AAAAA0000A1Z5" style={styles.input} />
-              <span style={styles.hint}>15 characters ka hona chahiye</span>
+                maxLength={15} placeholder="22AAAAA0000A1Z5" className="rsetup-input" />
+              <span style={styles.hint}>Must be 15 characters</span>
             </Field>
             <Field label="Tax Percentage (%)">
               <input type="number" name="tax_percentage" value={form.tax_percentage}
-                onChange={handleChange} min={0} max={100} step={0.5} style={styles.input} />
+                onChange={handleChange} min={0} max={100} step={0.5} className="rsetup-input" />
             </Field>
             <div style={styles.checkRow}>
               <input type="checkbox" id="tax_incl" name="tax_inclusive"
-                checked={form.tax_inclusive} onChange={handleChange} />
+                checked={form.tax_inclusive} onChange={handleChange} className="rsetup-check" />
               <label htmlFor="tax_incl" style={styles.checkLabel}>
-                Tax inclusive hai (price mein already included)
+                Tax is inclusive (already included in price)
               </label>
             </div>
-            <div style={styles.twoCol}>
+            <div className="rsetup-two-col" style={styles.twoCol}>
               <Field label="Currency">
-                <select name="currency" value={form.currency} onChange={handleChange} style={styles.input}>
+                <select name="currency" value={form.currency} onChange={handleChange} className="rsetup-input">
                   <option value="INR">INR — Indian Rupee</option>
                   <option value="USD">USD — US Dollar</option>
                   <option value="AED">AED — UAE Dirham</option>
                 </select>
               </Field>
               <Field label="Symbol">
-                <input name="currency_symbol" value={form.currency_symbol} onChange={handleChange} style={styles.input} />
+                <input name="currency_symbol" value={form.currency_symbol} onChange={handleChange} className="rsetup-input" />
               </Field>
             </div>
           </div>
@@ -193,18 +315,22 @@ const RestaurantSetup = () => {
             {DAYS.map(day => (
               <div key={day} style={styles.dayRow}>
                 <span style={styles.dayName}>{DAY_LABELS[day]}</span>
-                <input type="checkbox" checked={!form.working_hours[day].is_closed}
-                  onChange={e => handleHours(day, 'is_closed', !e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={!form.working_hours[day].is_closed}
+                  onChange={e => handleHours(day, 'is_closed', !e.target.checked)}
+                  className="rsetup-check"
+                />
                 {!form.working_hours[day].is_closed ? (
                   <>
                     <input type="time" value={form.working_hours[day].open}
-                      onChange={e => handleHours(day, 'open', e.target.value)} style={styles.timeInput} />
-                    <span style={{ color: '#9ca3af', fontSize: '13px' }}>to</span>
+                      onChange={e => handleHours(day, 'open', e.target.value)} className="rsetup-time" />
+                    <span style={{ color: '#B9B0A0', fontSize: '12.5px' }}>to</span>
                     <input type="time" value={form.working_hours[day].close}
-                      onChange={e => handleHours(day, 'close', e.target.value)} style={styles.timeInput} />
+                      onChange={e => handleHours(day, 'close', e.target.value)} className="rsetup-time" />
                   </>
                 ) : (
-                  <span style={{ color: '#ef4444', fontSize: '13px' }}>Closed</span>
+                  <span style={{ color: '#B33F2C', fontSize: '12.5px', fontWeight: '600', letterSpacing: '0.04em' }}>CLOSED</span>
                 )}
               </div>
             ))}
@@ -216,25 +342,24 @@ const RestaurantSetup = () => {
           <div>
             <Field label="Receipt Header">
               <input name="receipt_header" value={form.receipt_header || ''}
-                onChange={handleChange} placeholder="Thank you for visiting!" style={styles.input} />
+                onChange={handleChange} placeholder="Thank you for visiting!" className="rsetup-input" />
             </Field>
             <Field label="Receipt Footer">
               <input name="receipt_footer" value={form.receipt_footer || ''}
-                onChange={handleChange} placeholder="Visit us again!" style={styles.input} />
+                onChange={handleChange} placeholder="Visit us again!" className="rsetup-input" />
             </Field>
             <div style={styles.checkRow}>
               <input type="checkbox" id="show_logo" name="show_logo_on_receipt"
-                checked={form.show_logo_on_receipt} onChange={handleChange} />
+                checked={form.show_logo_on_receipt} onChange={handleChange} className="rsetup-check" />
               <label htmlFor="show_logo" style={styles.checkLabel}>
-                Receipt pe logo dikhao
+                Show logo on receipt
               </label>
             </div>
           </div>
         )}
 
-        <button onClick={handleSave} disabled={saving}
-          style={{ ...styles.saveBtn, opacity: saving ? 0.6 : 1 }}>
-          {saving ? 'Save ho raha hai...' : 'Save Karo'}
+        <button onClick={handleSave} disabled={saving} className="rsetup-save-btn">
+          {saving ? 'Saving…' : 'Save →'}
         </button>
       </div>
     </div>
@@ -243,8 +368,17 @@ const RestaurantSetup = () => {
 
 // Helper component
 const Field = ({ label, children }) => (
-  <div style={{ marginBottom: '16px' }}>
-    <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+  <div style={{ marginBottom: '18px' }}>
+    <label style={{
+      display: 'block',
+      fontFamily: "'JetBrains Mono', monospace",
+      fontSize: '10.5px',
+      fontWeight: '700',
+      letterSpacing: '0.1em',
+      textTransform: 'uppercase',
+      color: '#7A7264',
+      marginBottom: '8px'
+    }}>
       {label}
     </label>
     {children}
@@ -252,28 +386,81 @@ const Field = ({ label, children }) => (
 );
 
 const styles = {
-  page:       { padding: '24px', background: '#f8fafc', minHeight: '100vh' },
-  centered:   { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' },
-  topBar:     { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
-  title:      { fontSize: '22px', fontWeight: '600', color: '#1e293b', margin: '0' },
-  backBtn:    { background: '#fff', border: '1px solid #d1d5db', color: '#374151', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px' },
-  tabs:       { display: 'flex', gap: '4px', marginBottom: '20px', borderBottom: '1px solid #e2e8f0', paddingBottom: '0' },
-  tab:        { padding: '8px 20px', background: 'none', border: 'none', borderBottom: '2px solid transparent', cursor: 'pointer', fontSize: '14px', color: '#64748b', marginBottom: '-1px' },
-  tabActive:  { borderBottomColor: '#2563eb', color: '#2563eb', fontWeight: '600' },
-  card:       { background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', maxWidth: '700px' },
-  msg:        { padding: '10px 14px', borderRadius: '8px', fontSize: '14px', marginBottom: '16px' },
-  msgSuccess: { background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a' },
-  msgError:   { background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' },
-  input:      { width: '100%', border: '1px solid #d1d5db', borderRadius: '8px', padding: '10px 14px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' },
-  hint:       { fontSize: '12px', color: '#9ca3af', marginTop: '4px', display: 'block' },
-  twoCol:     { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
-  threeCol:   { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' },
-  checkRow:   { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' },
-  checkLabel: { fontSize: '14px', color: '#374151', cursor: 'pointer' },
-  dayRow:     { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid #f1f5f9' },
-  dayName:    { width: '100px', fontSize: '14px', fontWeight: '500', color: '#374151' },
-  timeInput:  { border: '1px solid #d1d5db', borderRadius: '6px', padding: '6px 10px', fontSize: '13px' },
-  saveBtn:    { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '12px 24px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' },
+  page: {
+    padding: '32px',
+    background: '#F7F5F0',
+    minHeight: '100vh',
+    fontFamily: "'JetBrains Mono', monospace"
+  },
+  centered: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100vh',
+    background: '#F7F5F0'
+  },
+  topBar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '24px'
+  },
+  eyebrow: {
+    display: 'inline-block',
+    fontSize: '11px',
+    fontWeight: '700',
+    letterSpacing: '0.14em',
+    color: '#A97E44',
+    marginBottom: '6px'
+  },
+  title: {
+    fontFamily: "'Bebas Neue', sans-serif",
+    fontSize: '28px',
+    letterSpacing: '0.01em',
+    color: '#1A1815',
+    margin: 0
+  },
+  tabs: {
+    display: 'flex',
+    gap: '4px',
+    marginBottom: '20px',
+    borderBottom: '1px solid #E9E3D6'
+  },
+  card: {
+    background: '#FFFFFF',
+    borderRadius: '6px',
+    border: '1px solid #E9E3D6',
+    padding: '28px',
+    boxShadow: '0 1px 2px rgba(26,24,21,0.03), 0 12px 30px rgba(26,24,21,0.05)',
+    maxWidth: '700px',
+    position: 'relative'
+  },
+  perforation: {
+    position: 'absolute',
+    top: '-1px',
+    left: 0,
+    right: 0,
+    height: '3px',
+    background: 'repeating-linear-gradient(to right, #E9E3D6 0, #E9E3D6 6px, transparent 6px, transparent 12px)',
+    borderTopLeftRadius: '6px',
+    borderTopRightRadius: '6px'
+  },
+  msg: {
+    padding: '10px 14px',
+    borderRadius: '4px',
+    fontSize: '12.5px',
+    fontWeight: '500',
+    marginBottom: '18px'
+  },
+  msgSuccess: { background: '#F0F7EE', border: '1px solid #CFE3C6', color: '#3F7D33' },
+  msgError:   { background: '#FBEEEB', border: '1px solid #EBC7BC', color: '#B33F2C' },
+  hint:       { fontSize: '11.5px', color: '#B9B0A0', marginTop: '6px', display: 'block' },
+  twoCol:     { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' },
+  threeCol:   { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' },
+  checkRow:   { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' },
+  checkLabel: { fontSize: '13px', color: '#1A1815', cursor: 'pointer' },
+  dayRow:     { display: 'flex', alignItems: 'center', gap: '14px', padding: '11px 0', borderTop: '1px dashed #E9E3D6' },
+  dayName:    { width: '100px', fontSize: '13px', fontWeight: '600', color: '#1A1815' },
 };
 
 export default RestaurantSetup;

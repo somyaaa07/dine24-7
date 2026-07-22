@@ -213,7 +213,7 @@ export const login = async(req,res)=>{
         }
 
         // we will find out if the tenant is active or not 
-        const tenant = await Tenant.findByPk(tenant_id);
+        const tenant = await Tenant.findByPk(user.tenant_id);
 
         if(tenant.status === 'suspended'){
             return res.status(403).json({

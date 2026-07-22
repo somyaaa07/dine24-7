@@ -24,7 +24,10 @@ AuditLog.init({
             "LOGOUT",
             "LOGIN_FAILED",
             "PASSWORD_RESET",
-            "TOKEN_REFRESHED"
+            "TOKEN_REFRESHED",
+            "TABLE_CREATED",
+            "TABLE_DELETED",
+            "TABLE_STATUS_UNCHANGED"
         ), allowNull:false
     },
     ip_address:{
