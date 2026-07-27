@@ -9,7 +9,9 @@ import Tables from './tables.model.js';
 import MenuCategory from "./menuCategory.model.js";
 import MenuItem from "./menuItem.model.js";
 import MenuVariant from "./menuVariant.model.js";
-
+import InventoryItem from "./inventoryItem.model.js";
+import StockTransaction from "./stockTransaction.model.js";
+import Supplier from "./supplier.model.js";
 
 //relationship management
 
@@ -59,6 +61,17 @@ MenuVariant.belongsTo(MenuItem,{foreignKey:"menu_item_id"});
 Tenant.hasMany(MenuVariant,{foreignKey:"tenant_id"});
 MenuVariant.belongsTo(Tenant,{foreignKey:"tenant_id"});
 
+Tenant.hasMany(InventoryItem,{foreignKey:"tenant_id"});
+InventoryItem.belongsTo(Tenant,{foreignKey:"tenant_id"});
+
+InventoryItem.hasMany(StockTransaction,{foreignKey:'inventory_item_id'});
+StockTransaction.belongsTo(InventoryItem,{foreignKey:'inventory_item_id'});
+
+Tenant.hasMany(StockTransaction,{foreignKey:'tenant_id'});
+StockTransaction.belongsTo(Tenant,{foreignKey:'tenant_id'});
+
+Tenant.hasMany(Supplier,{foreignKey:"tenant_id"});
+Supplier.belongsTo(Tenant,{foreignKey:"tenant_id"});
 
 export {
   sequelize,
@@ -72,4 +85,8 @@ export {
   MenuCategory,
   MenuItem,
   MenuVariant,
+  InventoryItem,
+  StockTransaction,
+  Supplier,
+  
 };

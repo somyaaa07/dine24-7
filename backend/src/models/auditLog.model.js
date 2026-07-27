@@ -27,7 +27,9 @@ AuditLog.init({
             "TOKEN_REFRESHED",
             "TABLE_CREATED",
             "TABLE_DELETED",
-            "TABLE_STATUS_UNCHANGED"
+            "TABLE_STATUS_UNCHANGED",
+            "SUPPLIER_CREATED", 
+            "SUPPLIER_DELETED"
         ), allowNull:false
     },
     ip_address:{

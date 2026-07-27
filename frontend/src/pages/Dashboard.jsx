@@ -119,12 +119,24 @@ const Dashboard = () => {
           </h1>
         </div>
         <div style={styles.headerRight}>
+          
           <button onClick={() => navigate('/restaurant-setup')} className="rdash-outline-btn">
             Setup
           </button>
           <button onClick={() => navigate('/tables')} className="rdash-outline-btn">
             Tables
           </button>
+          <button onClick={() => navigate('/menu')} className="rdash-outline-btn" >
+  Menu
+</button>
+          <button onClick={() => navigate('/inventory')} className="rdash-outline-btn" >
+  Inventory
+</button>
+ <button onClick={() => navigate('/supplier')} className="rdash-outline-btn" >
+  Suppliers
+</button>
+
+
           <button onClick={handleLogout} className="rdash-logout-btn">
             Logout
           </button>
