@@ -135,6 +135,9 @@ const Dashboard = () => {
  <button onClick={() => navigate('/supplier')} className="rdash-outline-btn" >
   Suppliers
 </button>
+ <button onClick={() => navigate('/purchase-orders')} className="rdash-outline-btn" >
+  Purchase Orders
+</button>
 
 
           <button onClick={handleLogout} className="rdash-logout-btn">

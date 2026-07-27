@@ -15,6 +15,7 @@ import tableRoutes       from './routes/table.routes.js';
 import menuRoutes        from './routes/menu.routes.js';
 import inventoryRoutes   from './routes/inventory.routes.js';
 import supplierRoutes    from './routes/supplier.routes.js';
+import purchaseOrderRoutes from './routes/purchaseOrder.routes.js';
 
 const app = express();
 
@@ -36,7 +37,7 @@ app.use('/api/v1/tables',     tableRoutes);
 app.use('/api/v1/menu',       menuRoutes);
 app.use('/api/v1/inventory',  inventoryRoutes);
 app.use('/api/v1/supplier',   supplierRoutes);
-
+app.use('/api/v1/purchase-orders', purchaseOrderRoutes);
 // Health check
 app.get('/health', (req, res) => {
   res.status(200).json({ message: 'Server chal raha hai ✅' });

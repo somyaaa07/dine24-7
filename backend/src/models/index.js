@@ -12,6 +12,8 @@ import MenuVariant from "./menuVariant.model.js";
 import InventoryItem from "./inventoryItem.model.js";
 import StockTransaction from "./stockTransaction.model.js";
 import Supplier from "./supplier.model.js";
+import PurchaseOrder     from './purchaseOrder.js';
+import PurchaseOrderItem from './purchaseOrderItem.js';
 
 //relationship management
 
@@ -73,6 +75,20 @@ StockTransaction.belongsTo(Tenant,{foreignKey:'tenant_id'});
 Tenant.hasMany(Supplier,{foreignKey:"tenant_id"});
 Supplier.belongsTo(Tenant,{foreignKey:"tenant_id"});
 
+// Relationships
+Tenant.hasMany(PurchaseOrder,   { foreignKey: 'tenant_id' });
+PurchaseOrder.belongsTo(Tenant, { foreignKey: 'tenant_id' });
+
+Supplier.hasMany(PurchaseOrder,     { foreignKey: 'supplier_id' });
+PurchaseOrder.belongsTo(Supplier,   { foreignKey: 'supplier_id' });
+
+PurchaseOrder.hasMany(PurchaseOrderItem,     { foreignKey: 'purchase_order_id' });
+PurchaseOrderItem.belongsTo(PurchaseOrder,   { foreignKey: 'purchase_order_id' });
+
+InventoryItem.hasMany(PurchaseOrderItem,     { foreignKey: 'inventory_item_id' });
+PurchaseOrderItem.belongsTo(InventoryItem,   { foreignKey: 'inventory_item_id' });
+
+
 export {
   sequelize,
   Tenant,
@@ -88,5 +104,5 @@ export {
   InventoryItem,
   StockTransaction,
   Supplier,
-  
+  PurchaseOrder, PurchaseOrderItem  
 };

@@ -8,6 +8,8 @@ import ProtectedRoute from './components/Protectedroutes';
 import Menu from './pages/Menu';
 import Inventory from './pages/Inventory';
 import Suppliers from './pages/Supplier';
+import PurchaseOrders from './pages/PurchaseOrder';
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -39,7 +41,9 @@ const App = () => {
            <Route path="/supplier" element={
           <ProtectedRoute><Suppliers/></ProtectedRoute>
         }/>
-
+<Route path="/purchase-orders" element={
+  <ProtectedRoute><PurchaseOrders /></ProtectedRoute>
+} />
 
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

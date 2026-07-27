@@ -29,7 +29,9 @@ AuditLog.init({
             "TABLE_DELETED",
             "TABLE_STATUS_UNCHANGED",
             "SUPPLIER_CREATED", 
-            "SUPPLIER_DELETED"
+            "SUPPLIER_DELETED",
+            'PO_CREATED',
+'PO_STATUS_UPDATED',
         ), allowNull:false
     },
     ip_address:{
