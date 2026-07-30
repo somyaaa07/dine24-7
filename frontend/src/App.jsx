@@ -9,7 +9,7 @@ import Menu from './pages/Menu';
 import Inventory from './pages/Inventory';
 import Suppliers from './pages/Supplier';
 import PurchaseOrders from './pages/PurchaseOrder';
-
+import Recipes from './pages/Recipe';
 const App = () => {
   return (
     <BrowserRouter>
@@ -43,6 +43,9 @@ const App = () => {
         }/>
 <Route path="/purchase-orders" element={
   <ProtectedRoute><PurchaseOrders /></ProtectedRoute>
+} />
+<Route path="/recipes" element={
+  <ProtectedRoute><Recipes/></ProtectedRoute>
 } />
 
         {/* Default redirect */}

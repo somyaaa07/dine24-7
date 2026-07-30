@@ -14,6 +14,8 @@ import StockTransaction from "./stockTransaction.model.js";
 import Supplier from "./supplier.model.js";
 import PurchaseOrder     from './purchaseOrder.js';
 import PurchaseOrderItem from './purchaseOrderItem.js';
+import Recipe from './recipe.model.js';
+import RecipeIngredients from './recipeIngredient.model.js'
 
 //relationship management
 
@@ -75,7 +77,6 @@ StockTransaction.belongsTo(Tenant,{foreignKey:'tenant_id'});
 Tenant.hasMany(Supplier,{foreignKey:"tenant_id"});
 Supplier.belongsTo(Tenant,{foreignKey:"tenant_id"});
 
-// Relationships
 Tenant.hasMany(PurchaseOrder,   { foreignKey: 'tenant_id' });
 PurchaseOrder.belongsTo(Tenant, { foreignKey: 'tenant_id' });
 
@@ -87,6 +88,21 @@ PurchaseOrderItem.belongsTo(PurchaseOrder,   { foreignKey: 'purchase_order_id' }
 
 InventoryItem.hasMany(PurchaseOrderItem,     { foreignKey: 'inventory_item_id' });
 PurchaseOrderItem.belongsTo(InventoryItem,   { foreignKey: 'inventory_item_id' });
+
+MenuItem.hasMany(Recipe, {foreignKey:"menu_item_id"});
+Recipe.belongsTo(MenuItem,{foreignKey:"menu_item_id"})
+
+Tenant.hasMany(Recipe, {foreignKey:"tenant_id"});
+Recipe.belongsTo(Tenant,{foreignKey:"tenant_id"})
+
+Recipe.hasMany(RecipeIngredients,{foreignKey:"recipe_id"});
+RecipeIngredients.belongsTo(Recipe,{foreignKey:"recipe_id"})
+
+InventoryItem.hasMany(RecipeIngredients,{foreignKey:"inventory_item_id"});
+RecipeIngredients.belongsTo(InventoryItem,{foreignKey:"inventory_item_id"});
+
+Tenant.hasMany(RecipeIngredients,{foreignKey:"tenant_id"});
+RecipeIngredients.belongsTo(Tenant,{foreignKey:"tenant_id"})
 
 
 export {
@@ -104,5 +120,7 @@ export {
   InventoryItem,
   StockTransaction,
   Supplier,
-  PurchaseOrder, PurchaseOrderItem  
+  PurchaseOrder, PurchaseOrderItem  ,
+  Recipe,
+  RecipeIngredients,
 };

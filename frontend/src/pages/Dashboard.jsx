@@ -138,6 +138,9 @@ const Dashboard = () => {
  <button onClick={() => navigate('/purchase-orders')} className="rdash-outline-btn" >
   Purchase Orders
 </button>
+ <button onClick={() => navigate('/recipes')} className="rdash-outline-btn" >
+  Recipes
+</button>
 
 
           <button onClick={handleLogout} className="rdash-logout-btn">
