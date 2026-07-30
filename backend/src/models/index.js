@@ -16,6 +16,8 @@ import PurchaseOrder     from './purchaseOrder.js';
 import PurchaseOrderItem from './purchaseOrderItem.js';
 import Recipe from './recipe.model.js';
 import RecipeIngredients from './recipeIngredient.model.js'
+import Order from "./order.model.js";
+import OrderItem from './orderItem.model.js';
 
 //relationship management
 
@@ -102,7 +104,22 @@ InventoryItem.hasMany(RecipeIngredients,{foreignKey:"inventory_item_id"});
 RecipeIngredients.belongsTo(InventoryItem,{foreignKey:"inventory_item_id"});
 
 Tenant.hasMany(RecipeIngredients,{foreignKey:"tenant_id"});
-RecipeIngredients.belongsTo(Tenant,{foreignKey:"tenant_id"})
+RecipeIngredients.belongsTo(Tenant,{foreignKey:"tenant_id"});
+
+Tenant.hasMany(Order,{foreignKey:"tenant_id"});
+Order.belongsTo(Tenant,{foreignKey:"tenant_id"});
+
+Tables.hasMany(Order,{foreignKey:"table_id"});
+Order.belongsTo(Tenant,{foreignKey:"table_id"});
+
+Order.hasMany(OrderItem,{foreignKey:"order_id"});
+OrderItem.belongsTo(Order,{foreignKey:"order_id"});
+
+MenuItem.hasMany(OrderItem,{foreignKey:"menu_item_id"});
+OrderItem.belongsTo(MenuItem,{foreignKey:"menu_item_id"});
+
+Tenant.hasMany(OrderItem,{foreignKey:"tenant_id"});
+OrderItem.belongsTo(Tenant,{foreignKey:"tenant_id"})
 
 
 export {
@@ -123,4 +140,6 @@ export {
   PurchaseOrder, PurchaseOrderItem  ,
   Recipe,
   RecipeIngredients,
+  Order,
+  OrderItem
 };
