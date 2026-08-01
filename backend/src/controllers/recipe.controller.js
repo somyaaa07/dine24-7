@@ -460,17 +460,22 @@ export const consumeIngredients = async (menu_item_id, tenant_id , quantity=1 , 
         if(!recipe) return ;
 
         for(const ing of recipe.RecipeIngredients){
+               const invItem = ing.InventoryItem;
+
+                   if (!invItem) {
+        console.log(`InventoryItem missing for ingredient ${ing.id} - skipping`);
+        continue;
+    }
+
             const toConsume = parseFloat(ing.quantity)*quantity;
-            const invItem = ing.InventoryItem;
+            // const invItem = ing.InventoryItem;
 
             const newQty = Math.max(0,parseFloat((invItem.current_quantity)-toConsume));
 
-            await InventoryItem.update({
-                current_quantity:newQty ,
-                                where: { id: invItem.id }
-
-            },
-        {transaction})
+         await InventoryItem.update(
+    { current_quantity: newQty },
+    { where: { id: invItem.id }, transaction }
+)
 
         await StockTransaction.create({
             tenant_id,
@@ -479,7 +484,8 @@ export const consumeIngredients = async (menu_item_id, tenant_id , quantity=1 , 
             quantity:toConsume,
             note:`Order:${menu_item_id}`,
             performed_by:user_id
-        })
+        },{transaction}
+    )
         }
     }
 

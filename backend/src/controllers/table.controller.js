@@ -1,10 +1,10 @@
-import { Tables, AuditLog } from '../models/index.js';
+import { Tables as Table, AuditLog } from '../models/index.js';
 
 export const getAllTables = async (req, res) => {
 
     try {
         const tenant_id = req.user.tenant_id;
-        const tables = await Table.findAll({ where: { tenant_id, isActive: true }, order: [['section', 'ASC'], ['table_number', 'ASC']] });
+        const tables = await Table.findAll({ where: { tenant_id, is_active: true }, order: [['section', 'ASC'], ['table_number', 'ASC']] });
 
         const grouped = tables.reduce((acc, table) => {
             const section = table.section || 'main section';
@@ -37,7 +37,7 @@ export const getTableById = async (req, res) => {
         const tenant_id = req.user.tenant_id;
         const { id } = req.params;
 
-        const table = await Table.findOne({ where: { id, tenant_id, isActive: true } });
+        const table = await Table.findOne({ where: { id, tenant_id, is_active: true } });
 
         if (!table) {
             return res.status(404).json({
@@ -80,7 +80,7 @@ export const createTable = async (req, res) => {
             })
         }
 
-        const existing = await Table.findOne({ where: { tenant_id, table_number, isActive: true } });
+        const existing = await Table.findOne({ where: { tenant_id, table_number, is_active: true } });
 
         if (existing) {
             return res.status(400).json({
@@ -156,7 +156,8 @@ export const createBulkTable = async (req, res) => {
             const exisiting = await Table.findOne({
                 where: {
                     tenant_id,
-                    table_number
+                    table_number,
+                    is_active: true
                 }
             })
 
@@ -180,7 +181,7 @@ export const createBulkTable = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            create: created.length,
+            created: created.length,
             skipped: skipped.length,
             skipped_tables: skipped
 
@@ -188,7 +189,7 @@ export const createBulkTable = async (req, res) => {
     }
     catch (error) {
         console.log("Bulk table creation got failed", error)
-        return res.tatus(500).json({
+        return res.status(500).json({
             success: false,
             message: "Server error"
         })
@@ -196,198 +197,199 @@ export const createBulkTable = async (req, res) => {
 }
 
 
-export const updateTable = async (req,res)=>{
-    try{
+export const updateTable = async (req, res) => {
+    try {
         const tenant_id = req.user.tenant_id;
-        const {id} = req.params;
-        const {table_number,section,capacity}=req.body;
+        const { id } = req.params;
+        const { table_number, section, capacity } = req.body;
 
-        const table = awaitTable.findOne({
-            where:{
+        const table = await Table.findOne({
+            where: {
                 id,
                 tenant_id,
-                is_active:true
+                is_active: true
             }
         })
 
-        if(!table){
+        if (!table) {
             return res.status(404).json({
-                success:false,
-                message:"Table not found"
+                success: false,
+                message: "Table not found"
             })
         }
 
-        if(table.status === "occuiped" && (table_number || section)){
+        if (table.status === "occupied" && (table_number || section)) {
             return res.status(400).json({
-                success:false,
-                message:"Cannot update table number or section when table is occupied"
+                success: false,
+                message: "Cannot update table number or section when table is occupied"
             })
         }
 
-        if(table_number && table_number !== table.table_number){
+        if (table_number && table_number !== table.table_number) {
             const exisiting = await Table.findOne({
-                where:{
+                where: {
                     tenant_id,
                     table_number,
-                    is_active:true
+                    is_active: true
                 }
             });
 
-            if(exisiting){
+            if (exisiting) {
                 return res.status(400).json({
-                    success:false,
-                    message:`Table number already exists ${table_number}`});
-                
+                    success: false,
+                    message: `Table number already exists ${table_number}`
+                });
+
             }
-
-            await table.update({
-                ...(table_number && {table_number}),
-                ...(section && {section}),
-                ...(capacity && {capacity})
-            })
-
-            return res.status(200).json({
-                success:true,
-                message:"Table updated successfully",
-                data:table
-            })
         }
+
+        await table.update({
+            ...(table_number && { table_number }),
+            ...(section && { section }),
+            ...(capacity && { capacity })
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Table updated successfully",
+            data: table
+        })
     }
-    catch(error){
-        console.log("Error on updating table",error);
+    catch (error) {
+        console.log("Error on updating table", error);
         return res.status(500).json({
-            success:false,
-            message:"Server Error"
+            success: false,
+            message: "Server Error"
         })
     }
 }
 
 
 // updated status - table status update
-export const updateStatus = async(req,res)=>{
-    try{
+export const updateStatus = async (req, res) => {
+    try {
         const tenant_id = req.user.tenant_id;
-        const {id} = req.params;
-        const {status} = req.body;
+        const { id } = req.params;
+        const { status } = req.body;
 
         const validStatus = [
             'available',
             'occupied',
             'reserved',
-            'occupied'
+            'cleaning'
         ]
 
-        if(!validStatus.includes(status)){
+        if (!validStatus.includes(status)) {
             return res.status(400).json({
-                success:false,
-                message:`Status must be between in ${validStatus.join(", ")}}`
+                success: false,
+                message: `Status must be between in ${validStatus.join(", ")}`
             })
         }
 
         const table = await Table.findOne({
-            where:{
+            where: {
                 id,
                 tenant_id,
-                isActive:true
+                is_active: true
             }
         })
 
-        if(!table){
+        if (!table) {
             return res.status(404).json({
-                success:false,
-                message:"Table not found"
+                success: false,
+                message: "Table not found"
             })
         }
 
-        if(table.status === 'occupied' && status === 'available'){
+        if (table.status === 'occupied' && status === 'available') {
             return res.status(400).json({
-                success:false,
-                message:"table firstly will go on cleaning phir available"
+                success: false,
+                message: "table firstly will go on cleaning phir available"
             })
         }
 
         const previousStatus = table.status;
-        await table.update({status});
+        await table.update({ status });
 
         await AuditLog.create({
             tenant_id,
-            user_id:req.user.id,
-            action:'Table_status_changed',
-            ip_address:req.ip,
-            details:{
-                table_number:table.table_number,
-                from:previousStatus,
-                to:status
-                        }
+            user_id: req.user.id,
+            action: 'Table_status_changed',
+            ip_address: req.ip,
+            details: {
+                table_number: table.table_number,
+                from: previousStatus,
+                to: status
+            }
 
-        }) 
-        
-            return res.status(200).json({
-        success:true,
-        message:`table ${table.table_number} status changed to ${status}`,
-        data:table
-    })
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: `table ${table.table_number} status changed to ${status}`,
+            data: table
+        })
     }
-    catch(error){
-        console.log("updating status got failed",error)
+    catch (error) {
+        console.log("updating status got failed", error)
         return res.status(500).json({
-            success:false,
-            message:"server error"
+            success: false,
+            message: "server error"
         })
     }
 }
 
 
-export const deleteTable = async(req,res)=>{
-    try{
-        const { tenant_id } = req.user.tenant_id
-        const {id} = req.params
+export const deleteTable = async (req, res) => {
+    try {
+        const tenant_id = req.user.tenant_id;
+        const { id } = req.params
         const table = await Table.findOne({
-            where:{
+            where: {
                 id,
                 tenant_id,
-                is_Active:true
+                is_active: true
             }
         })
 
-        if(!table){
+        if (!table) {
             return res.status(404).json({
-                success:false,
-                message:"table not found"
+                success: false,
+                message: "table not found"
             })
         }
 
-        if(table.status === 'occupied'){
+        if (table.status === 'occupied') {
             return res.status(400).json({
-                success:false,
-                message:"occupied table can't be deleted"
+                success: false,
+                message: "occupied table can't be deleted"
             })
         }
 
         // we'll do soft delete instead of hardcode delete
         await table.update({
-            is_Active:false
+            is_active: false
         })
 
         await AuditLog.create({
             tenant_id,
-            user_id:req.user.id,
-            action:'TABLE_DELETED',
-            ip_address:req.ip,
-            details:{table_number:table.table_number}
+            user_id: req.user.id,
+            action: 'TABLE_DELETED',
+            ip_address: req.ip,
+            details: { table_number: table.table_number }
         })
 
         return res.status(200).json({
-            sucess:true,
-            message:"table deleted successfully"
+            success: true,
+            message: "table deleted successfully"
         })
-        }
+    }
 
-        catch(error){
-            console.log("failed to delete table",error)
-            return res.status(500).json({
-                success:false,
-                message:"server error"
-            })
-        }
+    catch (error) {
+        console.log("failed to delete table", error)
+        return res.status(500).json({
+            success: false,
+            message: "server error"
+        })
+    }
 }

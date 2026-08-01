@@ -29,7 +29,7 @@ OrderItem.init({
         type:DataTypes.STRING,
         allowNull:false
     },
-    qunatity:{
+    quantity:{
         type:DataTypes.INTEGER,
         allowNull:false,
         defaultValue:1

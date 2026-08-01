@@ -1,4 +1,5 @@
 import { sequelize } from "../config/database.js";
+import { Op } from "sequelize";
 import Role from "./role.model.js";
 import Tenant from "./tenant.model.js";
 import User from "./user.model.js";
@@ -110,7 +111,7 @@ Tenant.hasMany(Order,{foreignKey:"tenant_id"});
 Order.belongsTo(Tenant,{foreignKey:"tenant_id"});
 
 Tables.hasMany(Order,{foreignKey:"table_id"});
-Order.belongsTo(Tenant,{foreignKey:"table_id"});
+Order.belongsTo(Tables,{foreignKey:"table_id"});
 
 Order.hasMany(OrderItem,{foreignKey:"order_id"});
 OrderItem.belongsTo(Order,{foreignKey:"order_id"});

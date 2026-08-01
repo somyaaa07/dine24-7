@@ -32,6 +32,8 @@ AuditLog.init({
             "SUPPLIER_DELETED",
             'PO_CREATED',
 'PO_STATUS_UPDATED',
+'ORDER_CREATED',
+'ORDER_PAID',
         ), allowNull:false
     },
     ip_address:{

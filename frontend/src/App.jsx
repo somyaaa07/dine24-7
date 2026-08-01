@@ -10,6 +10,9 @@ import Inventory from './pages/Inventory';
 import Suppliers from './pages/Supplier';
 import PurchaseOrders from './pages/PurchaseOrder';
 import Recipes from './pages/Recipe';
+import POS from './pages/Pos';
+import Orders from './pages/Order';
+import KDS from './pages/Kds';
 const App = () => {
   return (
     <BrowserRouter>
@@ -47,6 +50,17 @@ const App = () => {
 <Route path="/recipes" element={
   <ProtectedRoute><Recipes/></ProtectedRoute>
 } />
+<Route path="/pos" element={
+  <ProtectedRoute><POS/></ProtectedRoute>
+} />
+  <Route path="/orders" element={
+          <ProtectedRoute><Orders/></ProtectedRoute>
+        }/>
+
+  <Route path="/kds" element={
+          <ProtectedRoute><KDS/></ProtectedRoute>
+        }/>
+
 
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

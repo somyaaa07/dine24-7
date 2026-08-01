@@ -17,7 +17,8 @@ import inventoryRoutes   from './routes/inventory.routes.js';
 import supplierRoutes    from './routes/supplier.routes.js';
 import purchaseOrderRoutes from './routes/purchaseOrder.routes.js';
 import recipeRoutes      from './routes/recipe.route.js';
-
+import orderRoutes        from './routes/order.routes.js';
+import kdsRoutes          from  './routes/kds.routes.js';
 const app = express();
 
 app.use(helmet());
@@ -40,9 +41,13 @@ app.use('/api/v1/inventory',  inventoryRoutes);
 app.use('/api/v1/supplier',   supplierRoutes);
 app.use('/api/v1/purchase-orders', purchaseOrderRoutes);
 app.use('/api/v1/recipes',    recipeRoutes);
+app.use('/api/v1/orders',     orderRoutes);
+app.use('/api/v1/kds',         kdsRoutes);
+
+
 // Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({ message: 'Server chal raha hai ✅' });
+  res.status(200).json({ message: 'Server is Running ✅' });
 });
 
 // 404 handler

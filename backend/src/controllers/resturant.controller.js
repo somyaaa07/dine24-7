@@ -13,12 +13,12 @@ export const getProfile = async (req, res) => {
         }
 
         return res.status(200).json({
-            sucess:true,
+            success:true,
             data:profile
         })
     }
     catch(error){
-        console.log("getProfile failed", err)
+        console.log("getProfile failed", error)
         return res.status(500).json(
             {
                 success:false,
@@ -56,10 +56,10 @@ export const updateProfile = async(req,res)=>{
             })
         };
 
-        if(tax_percentage && (tax_percentage < 0 || tax_percentage > 100)){
+        if(tax_percentage !== undefined && (tax_percentage < 0 || tax_percentage > 100)){
             return res.status(400).json({
                 success:false,
-                messgae:'tax percentage will be between 0 and 100 '
+                message:'tax percentage will be between 0 and 100 '
             })
         };
         
@@ -76,7 +76,7 @@ export const updateProfile = async(req,res)=>{
             profile = await ResturantProfile.create({tenant_id,resturant_name:'My Resturant'})
         }
 
-        await profile.Update({
+        await profile.update({
             ...(resturant_name && {resturant_name}),
             ...(email && {email}),
             ...(phone && {phone}),
@@ -91,7 +91,7 @@ export const updateProfile = async(req,res)=>{
             ...(working_hours && {working_hours}),
             ...(receipt_header !==undefined && {receipt_header}),
             ...(receipt_footer !==undefined && {receipt_footer}),
-            ...(show_logo_on_receipt !==undefiend && {show_logo_on_receipt})
+            ...(show_logo_on_receipt !==undefined && {show_logo_on_receipt})
 
         });
 
@@ -111,7 +111,7 @@ export const updateProfile = async(req,res)=>{
     }
     catch(error){
         console.log('Profile update is failed', error);
-        return res.status(400).json({
+        return res.status(500).json({
             success:false,
             message:'server error'
         })
@@ -120,12 +120,12 @@ export const updateProfile = async(req,res)=>{
 
 export const updateLogo = async(req,res)=>{
     try{
-        const tenant_id = req.user.user_id;
+        const tenant_id = req.user.tenant_id;
         const {logo_url} = req.body;
 
         if(!logo_url){
             return res.status(400).json({
-                sucess:false,
+                success:false,
                 message:'Logo URL is required'
             })
         }

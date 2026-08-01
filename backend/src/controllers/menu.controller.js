@@ -622,42 +622,45 @@ export const deleteVarient = async(req,res)=>{
 
 // full menu - For POS and QR 
 
-export const getFullMenu = async(req,res)=>{
-    try{
+// full menu - For POS and QR
+
+export const getFullMenu = async (req, res) => {
+    try {
         const tenant_id = req.user.tenant_id;
 
         const menu = await MenuCategory.findAll({
-            where:{tenant_id,
-                is_active:true
+            where: {
+                tenant_id,
+                is_active: true
             },
-            order:[['order','ASC']],
-            include:[{
-                model:MenuItem,
-                where:{
+            order: [['sort_order', 'ASC']],
+            include: [{
+                model: MenuItem,
+                where: {
                     tenant_id,
-                    is_active:true,
-                    is_available:true
+                    is_active: true,
+                    is_available: true
                 },
-                required:false,
-                order:[['sort_order','ASC']]
-            }],
-            include:[{
-                model:MenuVariant,
-                where:{is_active:true},
-                required:false
+                required: false,
+                order: [['sort_order', 'ASC']],
+                include: [{
+                    model: MenuVariant,
+                    where: { is_active: true },
+                    required: false
+                }]
             }]
         })
 
         return res.status(200).json({
-            success:true,
-            data:menu
+            success: true,
+            data: menu
         })
     }
-    catch(error){
-        console.log("Error in getFullMenu",error)
+    catch (error) {
+        console.log("Error in getFullMenu", error)
         return res.status(500).json({
-            success:false,
-            message:'Server Error'
+            success: false,
+            message: 'Server Error'
         })
     }
 }
