@@ -147,6 +147,9 @@ const Dashboard = () => {
  <button onClick={() => navigate('/kds')} className="rdash-outline-btn" >
   KDS
 </button>
+ <button onClick={() => navigate('/customer')} className="rdash-outline-btn" >
+  Customers
+</button>
 
 
           <button onClick={handleLogout} className="rdash-logout-btn">

@@ -13,6 +13,7 @@ import Recipes from './pages/Recipe';
 import POS from './pages/Pos';
 import Orders from './pages/Order';
 import KDS from './pages/Kds';
+import Customers from './pages/Customer';
 const App = () => {
   return (
     <BrowserRouter>
@@ -60,7 +61,9 @@ const App = () => {
   <Route path="/kds" element={
           <ProtectedRoute><KDS/></ProtectedRoute>
         }/>
-
+  <Route path="/customer" element={
+          <ProtectedRoute><Customers/></ProtectedRoute>
+        }/>
 
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

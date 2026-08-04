@@ -19,6 +19,7 @@ import purchaseOrderRoutes from './routes/purchaseOrder.routes.js';
 import recipeRoutes      from './routes/recipe.route.js';
 import orderRoutes        from './routes/order.routes.js';
 import kdsRoutes          from  './routes/kds.routes.js';
+import customerRoutes    from   './routes/customer.route.js'
 const app = express();
 
 app.use(helmet());
@@ -43,7 +44,7 @@ app.use('/api/v1/purchase-orders', purchaseOrderRoutes);
 app.use('/api/v1/recipes',    recipeRoutes);
 app.use('/api/v1/orders',     orderRoutes);
 app.use('/api/v1/kds',         kdsRoutes);
-
+app.use('/api/v1/customers', customerRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

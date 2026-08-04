@@ -19,6 +19,7 @@ import Recipe from './recipe.model.js';
 import RecipeIngredients from './recipeIngredient.model.js'
 import Order from "./order.model.js";
 import OrderItem from './orderItem.model.js';
+import Customer from './customer.model.js';
 
 //relationship management
 
@@ -122,6 +123,8 @@ OrderItem.belongsTo(MenuItem,{foreignKey:"menu_item_id"});
 Tenant.hasMany(OrderItem,{foreignKey:"tenant_id"});
 OrderItem.belongsTo(Tenant,{foreignKey:"tenant_id"})
 
+Tenant.hasMany(Customer,{foreignKey:"tenant_id"});
+Customer.belongsTo(Tenant,{foreignKey:"tenant_id"});
 
 export {
   sequelize,
@@ -142,5 +145,7 @@ export {
   Recipe,
   RecipeIngredients,
   Order,
-  OrderItem
+  OrderItem,
+  Customer,
+
 };
