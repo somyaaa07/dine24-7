@@ -150,6 +150,9 @@ const Dashboard = () => {
  <button onClick={() => navigate('/customer')} className="rdash-outline-btn" >
   Customers
 </button>
+ <button onClick={() => navigate('/reservation')} className="rdash-outline-btn" >
+  Reservation
+</button>
 
 
           <button onClick={handleLogout} className="rdash-logout-btn">

@@ -62,7 +62,6 @@ const Orders = () => {
 
   useEffect(() => {
     loadOrders(activeStatus);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStatus]);
 
   const handleStatusChange = async (order, newStatus) => {

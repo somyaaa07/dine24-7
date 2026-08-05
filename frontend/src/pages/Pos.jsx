@@ -34,7 +34,6 @@ const POS = () => {
         setTables(tablesRes.data.data.tables || []);
         setCategories(menuRes.data.data || []);
 
-        // Flatten all items
         const allItems = (menuRes.data.data || []).flatMap(cat =>
           (cat.MenuItems || []).map(item => ({ ...item, category_name: cat.name }))
         );

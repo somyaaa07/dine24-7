@@ -20,7 +20,7 @@ import RecipeIngredients from './recipeIngredient.model.js'
 import Order from "./order.model.js";
 import OrderItem from './orderItem.model.js';
 import Customer from './customer.model.js';
-
+import Reservation from "./reservation.model.js";
 //relationship management
 
 //tenant and user realtionship as user belongs to tenant
@@ -126,6 +126,12 @@ OrderItem.belongsTo(Tenant,{foreignKey:"tenant_id"})
 Tenant.hasMany(Customer,{foreignKey:"tenant_id"});
 Customer.belongsTo(Tenant,{foreignKey:"tenant_id"});
 
+Tenant.hasMany(Reservation,{foreignKey:"tenant_id"});
+Reservation.belongsTo(Tenant,{foreignKey:"tenant_id"});
+
+Tables.hasMany(Reservation,{foreignKey:"table_id"});
+Reservation.belongsTo(Tables,{foreignKey:"table_id"});
+
 export {
   sequelize,
   Tenant,
@@ -147,5 +153,5 @@ export {
   Order,
   OrderItem,
   Customer,
-
+  Reservation
 };
