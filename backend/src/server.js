@@ -21,6 +21,13 @@ import orderRoutes        from './routes/order.routes.js';
 import kdsRoutes          from  './routes/kds.routes.js';
 import customerRoutes    from   './routes/customer.route.js';
 import reservationRoutes from './routes/reservation.routes.js';
+import employeeRoutes        from './routes/employee.routes.js';
+import expenseRoutes         from './routes/expense.routes.js';
+import reportsRoutes         from './routes/report.routes.js';
+import notificationsRoutes   from './routes/notification.routes.js';
+import qrOrderRoutes         from './routes/qr.routes.js';
+import analyticsRoutes       from './routes/analytics.routes.js';
+import superAdminRoutes      from './routes/superAdmin.routes.js';
 
 const app = express();
 
@@ -48,6 +55,13 @@ app.use('/api/v1/orders',     orderRoutes);
 app.use('/api/v1/kds',         kdsRoutes);
 app.use('/api/v1/customers', customerRoutes);
 app.use('/api/v1/reservations',reservationRoutes);
+app.use('/api/v1/employees',       employeeRoutes);
+app.use('/api/v1/expenses',        expenseRoutes);
+app.use('/api/v1/reports',         reportsRoutes);
+app.use('/api/v1/notifications',   notificationsRoutes);
+app.use('/api/v1/qr',              qrOrderRoutes);
+app.use('/api/v1/analytics',       analyticsRoutes);
+app.use('/api/v1/super-admin',     superAdminRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

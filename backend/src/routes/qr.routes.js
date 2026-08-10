@@ -1,5 +1,5 @@
 import express from 'express';
-import * as qrController from '../controllers/qrOrder.controller.js';
+import * as qrController from '../controllers/qrOrdering.controller.js';
 
 const router = express.Router();
 

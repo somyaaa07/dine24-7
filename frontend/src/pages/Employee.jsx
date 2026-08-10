@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import api from '../api';
 
 const ROLES = ['manager','waiter','chef','cashier','cleaner','delivery','other'];
 const TABS  = ['employees','attendance','payroll'];

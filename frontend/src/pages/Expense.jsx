@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import api from '../api';
 
 const CATEGORIES = ['rent','electricity','water','gas','maintenance','marketing','salary','supplies','other'];
 const EMPTY_FORM = { title:'', category:'other', amount:'', expense_date: new Date().toISOString().split('T')[0], payment_method:'cash', note:'' };

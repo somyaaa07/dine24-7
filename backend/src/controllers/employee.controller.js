@@ -1,5 +1,5 @@
 import {Employee,Attendance,Payroll} from '../models/index.js';
-import {Op} from 'sequelize';
+import { Op } from 'sequelize';
 
 
 export const getAllEmployee = async(req,res)=>{
@@ -238,45 +238,41 @@ export const markAttendance = async(req,res)=>{
     }
 }
 
-export const getAttendance = async(req,res)=>{
-    try{
-        const tenant_id = req.user.tenant_id;
-        const {employee_id,month,year} = req.query;
+export const getAttendance = async (req, res) => {
+  try {
+    const tenant_id = req.user.tenant_id;
+    const { employee_id, month, year } = req.query;
 
-        const {where} = {tenant_id}
-        if(employee_id){
-            where.employee_id = employee_id
-        }
+    // FIX 1 — const {where} = {tenant_id} galat tha
+    const where = { tenant_id };
 
-        if(month && year){
-            const startDate = `${year} -${String(month).padStart(2,"0")}-01`;
-            const endDate = new Date(year,month,0).toISOString().split("T")[0];
-            where.date = {
-                [Op.between]:[startDate,endDate]
-            }
-        }
-
-        const attendance = await Attendance.findAll({
-            where,order:[['date','DESC']],
-            include:[{
-                model:Employee,
-                attributes:['id','name','role']
-            }]
-        });
-
-        return res.status(200).json({
-            success:true,
-            data:attendance
-        })
+    if (employee_id) {
+      where.employee_id = employee_id;
     }
-    catch(err){
-        console.log("Error in getAttendance",err);
-        return res.status(500).json({
-            success:false,
-            message:"Internal Server Error"
-        })
+
+    if (month && year) {
+      // FIX 2 — space hata diya year ke baad
+      const startDate   = `${year}-${String(month).padStart(2, '0')}-01`;
+      const endDate     = new Date(year, month, 0).toISOString().split('T')[0];
+      where.date        = { [Op.between]: [startDate, endDate] };
     }
-}
+
+    const attendance = await Attendance.findAll({
+      where,
+      order: [['date', 'DESC']],
+      include: [{
+        model:      Employee,
+        attributes: ['id', 'name', 'role']
+      }]
+    });
+
+    return res.status(200).json({ success: true, data: attendance });
+
+  } catch (err) {
+    console.log('Error in getAttendance', err);
+    return res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
 
 export const genratePayroll = async(req,res)=>{
     try{
