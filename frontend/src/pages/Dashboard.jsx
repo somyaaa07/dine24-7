@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import useAuthStore from '../store/authStore';
-
-const NAV_LINKS = [
+// PEHLE: const NAV_LINKS = [ ... , { label: 'Super Admin', path: '/super-admin' }, ];
+// BAAD ME:
+const BASE_NAV_LINKS = [
   { label: 'Setup',           path: '/restaurant-setup' },
   { label: 'Tables',          path: '/tables' },
   { label: 'Menu',            path: '/menu' },
@@ -19,9 +20,7 @@ const NAV_LINKS = [
   { label: 'Expenses',        path: '/expenses' },
   { label: 'Reports',         path: '/reports' },
   { label: 'Analytics',       path: '/analytics' },
-  { label: 'Super Admin',     path: '/super-admin' },
 ];
-
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
@@ -151,7 +150,7 @@ const Dashboard = () => {
 
       {/* Nav Links */}
       <div style={styles.navBar}>
-        {NAV_LINKS.map(link => (
+        {BASE_NAV_LINKS.map(link => (
           <button key={link.path} onClick={() => navigate(link.path)} className="rdash-nav-btn">
             {link.label}
           </button>

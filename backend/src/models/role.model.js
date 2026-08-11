@@ -11,7 +11,7 @@ Role.init(
             primaryKey:true
         },
         name:{
-            type:DataTypes.ENUM('owner','manager','waiter','chef'),
+type:DataTypes.ENUM('owner','manager','waiter','chef','super_admin'),
             allowNull:false
         },
         permissions:{

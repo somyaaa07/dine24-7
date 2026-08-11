@@ -44,8 +44,8 @@ const Login = () => {
         localStorage.setItem('access_token',  access_token);
         localStorage.setItem('refresh_token', refresh_token);
 
-        setUser(user);
-        navigate('/dashboard');
+       setUser(user);
+navigate(user.role === 'super_admin' ? '/super-admin' : '/dashboard');
       }
 
     } catch (err) {

@@ -67,11 +67,7 @@ export const register = async(req,res)=>{
             {
                 name:"owner",
                 tenant_id:newTenant.id,
-                permissions:JSON.stringify(
-                    {
-                        all:true
-                    }
-                ),
+              permissions:{ all:true },
             },
             {
                 name:"manager",
@@ -137,7 +133,7 @@ export const register = async(req,res)=>{
             {
                 tenant_id:newTenant.id,
                 user_id:user.id,
-                action:"TENANT REGISTER",
+              action:"REGISTER",
                 ip_address:req.ip
             },
             {transaction}
@@ -213,14 +209,15 @@ export const login = async(req,res)=>{
         }
 
         // we will find out if the tenant is active or not 
-        const tenant = await Tenant.findByPk(user.tenant_id);
-
-        if(tenant.status === 'suspended'){
-            return res.status(403).json({
-                success:false,
-                message:"Tenant is got suspended ! kindly renew it to continue"
-            });
-        }
+     if(user.tenant_id){
+    const tenant = await Tenant.findByPk(user.tenant_id);
+    if(tenant && tenant.status === 'suspended'){
+        return res.status(403).json({
+            success:false,
+            message:"Tenant is got suspended ! kindly renew it to continue"
+        });
+    }
+}
   const roleName = user.Role.name;
     const rolePermissions = user.Role.permissions;
         const accessToken = jwt.sign(
@@ -268,8 +265,7 @@ export const login = async(req,res)=>{
         await AuditLog.create({
             tenant_id:user.tenant_id,
             user_id:user.id,
-            action:"Login",
-            ip_address:req.ip,
+action:"LOGIN",            ip_address:req.ip,
         });
 
         return res.status(200).json({
@@ -341,7 +337,8 @@ export const logout = async(req,res)=>{
         await AuditLog.create({
             tenant_id:req.user.tenant_id,
             user_id:userId,
-            action:"Logout",
+        action:"LOGOUT",
+
             ip_address:req.ip,
 
         })

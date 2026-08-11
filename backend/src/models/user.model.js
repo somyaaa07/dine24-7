@@ -12,7 +12,7 @@ User.init(
         },
         tenant_id:{
             type:DataTypes.UUID,
-            allowNull:false,
+            allowNull:true,
             references:{
                 model:'tenants',
                 key:'id'

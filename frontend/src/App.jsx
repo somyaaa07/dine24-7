@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import  useAuthStore  from './store/authStore';
 
@@ -15,7 +16,7 @@ import Suppliers       from './pages/Supplier';
 import PurchaseOrders  from './pages/PurchaseOrder';
 import Recipes         from './pages/Recipe';
 import POS             from './pages/Pos';
-import KDS             from './pages/KDS';
+import KDS             from './pages/Kds';
 import Customers       from './pages/Customer';
 import Reservations    from './pages/Reservation';
 import Employees       from './pages/Employee';
@@ -25,19 +26,51 @@ import Analytics       from './pages/Analytics';
 import SuperAdmin      from './pages/SuperAdmin';
 import Orders          from './pages/Order';
 
-// Protected Route wrapper
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuthStore();
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+// Protected Route wrapper — waits for the initial /auth/me check before
+// deciding, and (optionally) enforces a required role, e.g. requiredRole="super_admin".
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const { isAuthenticated, isInitializing, user } = useAuthStore();
+
+  if (isInitializing) return <div style={{ padding: 40 }}>Loading…</div>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (requiredRole && user?.role !== requiredRole) return <Navigate to="/dashboard" replace />;
+
+  return children;
 };
 
-// Public Route wrapper — redirect to dashboard if already logged in
+// Public Route wrapper — redirect to the right home if already logged in
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated } = useAuthStore();
-  return !isAuthenticated ? children : <Navigate to="/dashboard" replace />;
+  const { isAuthenticated, isInitializing, user } = useAuthStore();
+  if (isInitializing) return <div style={{ padding: 40 }}>Loading…</div>;
+  if (!isAuthenticated) return children;
+  return <Navigate to={user?.role === 'super_admin' ? '/super-admin' : '/dashboard'} replace />;
+};
+
+// Sends an already-authenticated user to their correct home page based on role.
+// Used for "/" and any unmatched path, so super_admin never lands on the tenant dashboard.
+const HomeRedirect = () => {
+  const { isAuthenticated, isInitializing, user } = useAuthStore();
+  if (isInitializing) return <div style={{ padding: 40 }}>Loading…</div>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <Navigate to={user?.role === 'super_admin' ? '/super-admin' : '/dashboard'} replace />;
+};
+
+// If a super_admin somehow lands on the tenant /dashboard (bookmark, back button,
+// stale link) send them to their real home instead of showing tenant data that
+// doesn't apply to a platform-level account.
+const DashboardGate = () => {
+  const user = useAuthStore((s) => s.user);
+  if (user?.role === 'super_admin') return <Navigate to="/super-admin" replace />;
+  return <Dashboard />;
 };
 
 const App = () => {
+  const initializeAuth = useAuthStore((s) => s.initializeAuth);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -52,7 +85,7 @@ const App = () => {
 
         {/* ── Protected Routes ───────────────────────────── */}
         <Route path="/dashboard" element={
-          <ProtectedRoute><Dashboard /></ProtectedRoute>
+          <ProtectedRoute><DashboardGate /></ProtectedRoute>
         } />
         <Route path="/restaurant-setup" element={
           <ProtectedRoute><RestaurantSetup /></ProtectedRoute>
@@ -99,16 +132,16 @@ const App = () => {
         <Route path="/analytics" element={
           <ProtectedRoute><Analytics /></ProtectedRoute>
         } />
-              <Route path="/super-admin" element={
-          <ProtectedRoute requiredRole="owner"><SuperAdmin /></ProtectedRoute>
+        <Route path="/super-admin" element={
+          <ProtectedRoute requiredRole="super_admin"><SuperAdmin /></ProtectedRoute>
         } />
         <Route path="/orders" element={
           <ProtectedRoute><Orders/></ProtectedRoute>
         } />
 
         {/* ── Default Redirects ───────────────────────────── */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<HomeRedirect />} />
+        <Route path="*" element={<HomeRedirect />} />
 
       </Routes>
     </BrowserRouter>

@@ -4,11 +4,13 @@ import authMiddleware from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-router.get('/stats',                  authMiddleware, superAdminController.getPlatformStats);
-router.get('/tenants',                authMiddleware, superAdminController.getAllTenants);
-router.get('/tenants/:id',            authMiddleware, superAdminController.getTenantById);
-router.put('/tenants/:id/status',     authMiddleware, superAdminController.updateTenantStatus);
-router.put('/tenants/:id/plan',       authMiddleware, superAdminController.updateTenantPlan);
-router.delete('/tenants/:id',         authMiddleware, superAdminController.deleteTenant);
+router.use(authMiddleware, superAdminController.superAdminMiddleware);
+
+router.get('/stats',                  superAdminController.getPlatformStats);
+router.get('/tenants',                superAdminController.getAllTenants);
+router.get('/tenants/:id',            superAdminController.getTenantById);
+router.put('/tenants/:id/status',     superAdminController.updateTenantStatus);
+router.put('/tenants/:id/plan',       superAdminController.updateTenantPlan);
+router.delete('/tenants/:id',         superAdminController.deleteTenant);
 
 export default router;

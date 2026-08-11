@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Table, MenuCategory, MenuItem, MenuVariant, Order, OrderItem, RestaurantProfile, sequelize } from '../models/index.js';
+import { Tables, MenuCategory, MenuItem, MenuVariant, Order, OrderItem, ResturantProfile, sequelize } from '../models/index.js';
 
 // Public — no auth — customer QR scan karta hai
 export const getPublicMenu = async (req, res) => {
@@ -7,7 +7,7 @@ export const getPublicMenu = async (req, res) => {
     const { tenant_id, table } = req.query;
     if (!tenant_id) return res.status(400).json({ success: false, message: 'tenant_id required' });
 
-    const profile   = await RestaurantProfile.findOne({ where: { tenant_id } });
+    const profile   = await ResturantProfile.findOne({ where: { tenant_id } });
     const tableInfo = table
       ? await Table.findOne({ where: { tenant_id, table_number: table, is_active: true } })
       : null;
@@ -65,7 +65,7 @@ export const placeQROrder = async (req, res) => {
 
   const transaction = await sequelize.transaction();
   try {
-    const profile = await RestaurantProfile.findOne({ where: { tenant_id } });
+    const profile = await ResturantProfile.findOne({ where: { tenant_id } });
     const taxRate = profile ? parseFloat(profile.tax_percentage) / 100 : 0.05;
 
     // FIX — UUID based order number — no race condition

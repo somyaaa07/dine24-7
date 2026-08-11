@@ -28,7 +28,7 @@ const useAuthStore = create((set, get) => ({
 
     try {
       // Lazy import to avoid circular dependency
-      const { default: api } = await import('./api');
+const { default: api } = await import('../api');
       const res = await api.get('/auth/me');
 
       if (res.data.success) {
