@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api/v1',
+  baseURL: BASE_URL,
   withCredentials: true,
 });
 
@@ -34,7 +36,7 @@ api.interceptors.response.use(
         const refresh_token = localStorage.getItem('refresh_token');
 
         const res = await axios.post(
-          'http://localhost:5000/api/v1/auth/refresh-token',
+          `${BASE_URL}/auth/refresh-token`,
           { refresh_token }
         );
 
@@ -47,6 +49,7 @@ api.interceptors.response.use(
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         window.location.href = '/login';
+        return Promise.reject(refreshError);
       }
     }
 

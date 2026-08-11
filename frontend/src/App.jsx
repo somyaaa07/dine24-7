@@ -23,6 +23,7 @@ import Expenses        from './pages/Expense';
 import Reports         from './pages/Reports';
 import Analytics       from './pages/Analytics';
 import SuperAdmin      from './pages/SuperAdmin';
+import Orders          from './pages/Order';
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }) => {
@@ -98,8 +99,11 @@ const App = () => {
         <Route path="/analytics" element={
           <ProtectedRoute><Analytics /></ProtectedRoute>
         } />
-        <Route path="/super-admin" element={
-          <ProtectedRoute><SuperAdmin /></ProtectedRoute>
+              <Route path="/super-admin" element={
+          <ProtectedRoute requiredRole="owner"><SuperAdmin /></ProtectedRoute>
+        } />
+        <Route path="/orders" element={
+          <ProtectedRoute><Orders/></ProtectedRoute>
         } />
 
         {/* ── Default Redirects ───────────────────────────── */}
