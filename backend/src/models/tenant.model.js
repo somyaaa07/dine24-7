@@ -23,15 +23,8 @@ Tenant.init(
             type:DataTypes.ENUM('starter','growth','enterprise'),
             defaultValue:'starter'
         },
-        status:{
-            type:DataTypes.ENUM(
-                'Trial',
-                'Suspend',
-                'active',
-                'cancelled'
-            ),
-            defaultValue:'Trial'
-        },
+     status: {type:DataTypes.ENUM('trial','active','suspended','cancelled'),
+defaultValue: 'trial'},
         trial_ends_at:{
             type:DataTypes.DATE
         },

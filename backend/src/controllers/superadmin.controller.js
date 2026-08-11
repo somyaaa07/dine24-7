@@ -223,11 +223,15 @@ export const createTenant = async (req, res) => {
 
     await transaction.commit();
 
-    return res.status(201).json({
-      success: true,
-      message: 'Tenant created successfully',
-      data: { ...newTenant.toJSON(), effective_features: getEffectiveFeatures(newTenant) }
-    });
+  return res.status(201).json({
+  success: true,
+  message: 'Tenant created successfully',
+  data: {
+    tenant: { ...newTenant.toJSON(), effective_features: getEffectiveFeatures(newTenant) },
+    owner: { id: user.id, name: user.name, email: user.email },
+    credentials: { email, password }
+  }
+});
   } catch (error) {
     await transaction.rollback();
     console.error('createTenant failed:', error);

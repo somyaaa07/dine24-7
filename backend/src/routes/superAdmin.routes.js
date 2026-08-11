@@ -7,6 +7,8 @@ const router = express.Router();
 router.use(authMiddleware, superAdminController.superAdminMiddleware);
 
 router.get('/stats',                  superAdminController.getPlatformStats);
+router.get('/features',               superAdminController.getFeatureCatalog);
+router.post('/tenants',               superAdminController.createTenant);
 router.get('/tenants',                superAdminController.getAllTenants);
 router.get('/tenants/:id',            superAdminController.getTenantById);
 router.put('/tenants/:id/status',     superAdminController.updateTenantStatus);
