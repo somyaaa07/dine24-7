@@ -1,9 +1,10 @@
 import express from 'express';
 import * as customerController from '../controllers/customer.controller.js'
 import authMiddleware from '../middleware/auth.middleware.js'
-
+import { requireFeature } from '../middleware/planCheck.middleware.js';
 const router = express.Router();
 
+router.use(authMiddleware, requireFeature('customer'));
 router.get('/special-dates',authMiddleware, customerController.getTodaySpecialDates);
 router.get('/',authMiddleware, customerController.getAllCustomers);
 router.get('/:id',authMiddleware,customerController.getCustomerById);

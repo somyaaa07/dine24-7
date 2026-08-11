@@ -64,6 +64,17 @@ const DashboardGate = () => {
   return <Dashboard />;
 };
 
+// Feature-gated route — even if someone types the URL directly or clicks an old
+// bookmark, if the super admin hasn't enabled this feature for the tenant,
+// bounce back to the dashboard. The backend enforces the same thing on the API
+// (requireFeature middleware), this is just so the UI doesn't show a broken page.
+const FeatureRoute = ({ feature, children }) => {
+  const user = useAuthStore((s) => s.user);
+  const enabledFeatures = user?.tenant?.enabled_features || [];
+  if (!enabledFeatures.includes(feature)) return <Navigate to="/dashboard" replace />;
+  return children;
+};
+
 const App = () => {
   const initializeAuth = useAuthStore((s) => s.initializeAuth);
 
@@ -91,46 +102,46 @@ const App = () => {
           <ProtectedRoute><RestaurantSetup /></ProtectedRoute>
         } />
         <Route path="/tables" element={
-          <ProtectedRoute><Tables /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="tables"><Tables /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/menu" element={
-          <ProtectedRoute><Menu /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="menu"><Menu /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/inventory" element={
-          <ProtectedRoute><Inventory /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="inventory"><Inventory /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/suppliers" element={
-          <ProtectedRoute><Suppliers /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="suppliers"><Suppliers /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/purchase-orders" element={
-          <ProtectedRoute><PurchaseOrders /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="purchase_orders"><PurchaseOrders /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/recipes" element={
-          <ProtectedRoute><Recipes /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="recipes"><Recipes /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/pos" element={
-          <ProtectedRoute><POS /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="pos"><POS /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/kds" element={
-          <ProtectedRoute><KDS /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="kds"><KDS /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/customers" element={
-          <ProtectedRoute><Customers /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="customers"><Customers /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/reservations" element={
-          <ProtectedRoute><Reservations /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="reservations"><Reservations /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/employees" element={
-          <ProtectedRoute><Employees /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="employees"><Employees /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/expenses" element={
-          <ProtectedRoute><Expenses /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="expenses"><Expenses /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/reports" element={
-          <ProtectedRoute><Reports /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="reports"><Reports /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/analytics" element={
-          <ProtectedRoute><Analytics /></ProtectedRoute>
+          <ProtectedRoute><FeatureRoute feature="analytics"><Analytics /></FeatureRoute></ProtectedRoute>
         } />
         <Route path="/super-admin" element={
           <ProtectedRoute requiredRole="super_admin"><SuperAdmin /></ProtectedRoute>

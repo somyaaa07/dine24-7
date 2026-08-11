@@ -1,9 +1,10 @@
 import express from 'express';
 import * as reportsController from '../controllers/report.controller.js';
 import authMiddleware from '../middleware/auth.middleware.js';
-
+import { requireFeature } from '../middleware/planCheck.middleware.js';
 const router = express.Router();
 
+router.use(authMiddleware, requireFeature('reports'));
 router.get('/sales',      authMiddleware, reportsController.getReport);
 router.get('/top-items',  authMiddleware, reportsController.getTopSellingItems);
 router.get('/inventory',  authMiddleware, reportsController.getInventoryReport);

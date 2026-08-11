@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { v4 as UUIDV4} from 'uuid'
 import {sequelize , Tenant , User , Role , AuditLog , RefreshToken } from '../models/index.js'
 import { sendWelcomeEmail } from '../utils/email.utils.js'
+import { getEffectiveFeatures } from '../config/plan.js'
 import jwt from 'jsonwebtoken';
 
 export const register = async(req,res)=>{
@@ -208,9 +209,10 @@ export const login = async(req,res)=>{
             });
         }
 
-        // we will find out if the tenant is active or not 
+        // we will find out if the tenant is active or not
+     let tenant = null;
      if(user.tenant_id){
-    const tenant = await Tenant.findByPk(user.tenant_id);
+    tenant = await Tenant.findByPk(user.tenant_id);
     if(tenant && tenant.status === 'suspended'){
         return res.status(403).json({
             success:false,
@@ -279,6 +281,14 @@ action:"LOGIN",            ip_address:req.ip,
                 email:user.email,
                 role:roleName,
                 permissions:rolePermissions,
+                tenant_id:user.tenant_id,
+                tenant: tenant ? {
+                    id: tenant.id,
+                    name: tenant.name,
+                    plan: tenant.plan,
+                    status: tenant.status,
+                    enabled_features: getEffectiveFeatures(tenant)
+                } : null,
                }
             }
            
@@ -454,6 +464,13 @@ export const getMe = async(req,res)=>{
             })
         }
 
+        // tenant-level users ke liye unke effective features nikalo
+        // (super admin ka override, warna plan ke defaults)
+        let tenant = null;
+        if(user.tenant_id){
+            tenant = await Tenant.findByPk(user.tenant_id);
+        }
+
         return res.status(200).json({
             success:true,
             data:{
@@ -463,7 +480,14 @@ export const getMe = async(req,res)=>{
                 role:user.Role.name,
                 tenant_id:user.tenant_id,
                 permissions:user.Role.permissions,
-                last_login_at:user.last_login_at
+                last_login_at:user.last_login_at,
+                tenant: tenant ? {
+                    id: tenant.id,
+                    name: tenant.name,
+                    plan: tenant.plan,
+                    status: tenant.status,
+                    enabled_features: getEffectiveFeatures(tenant)
+                } : null,
             }
         })
 

@@ -4,26 +4,37 @@ import api from '../api';
 import useAuthStore from '../store/authStore';
 // PEHLE: const NAV_LINKS = [ ... , { label: 'Super Admin', path: '/super-admin' }, ];
 // BAAD ME:
+// Har link ke saath uska `feature` key bhi hai — agar tenant ke paas wo
+// feature enabled nahi hai (super admin ne nahi diya), to ye link dikhega hi nahi.
+// `feature: null` ka matlab hai ye link hamesha dikhega (koi plan-gate nahi).
 const BASE_NAV_LINKS = [
-  { label: 'Setup',           path: '/restaurant-setup' },
-  { label: 'Tables',          path: '/tables' },
-  { label: 'Menu',            path: '/menu' },
-  { label: 'Inventory',       path: '/inventory' },
-  { label: 'Suppliers',       path: '/suppliers' },
-  { label: 'Purchase Orders', path: '/purchase-orders' },
-  { label: 'Recipes',         path: '/recipes' },
-  { label: 'POS',             path: '/pos' },
-  { label: 'KDS',             path: '/kds' },
-  { label: 'Customers',       path: '/customers' },
-  { label: 'Reservations',    path: '/reservations' },
-  { label: 'Employees',       path: '/employees' },
-  { label: 'Expenses',        path: '/expenses' },
-  { label: 'Reports',         path: '/reports' },
-  { label: 'Analytics',       path: '/analytics' },
+  { label: 'Setup',           path: '/restaurant-setup', feature: null },
+  { label: 'Tables',          path: '/tables',           feature: 'tables' },
+  { label: 'Menu',            path: '/menu',              feature: 'menu' },
+  { label: 'Inventory',       path: '/inventory',        feature: 'inventory' },
+  { label: 'Suppliers',       path: '/suppliers',        feature: 'suppliers' },
+  { label: 'Purchase Orders', path: '/purchase-orders',  feature: 'purchase_orders' },
+  { label: 'Recipes',         path: '/recipes',           feature: 'recipes' },
+  { label: 'POS',             path: '/pos',                feature: 'pos' },
+  { label: 'KDS',             path: '/kds',                feature: 'kds' },
+  { label: 'Customers',       path: '/customers',        feature: 'customers' },
+  { label: 'Reservations',    path: '/reservations',     feature: 'reservations' },
+  { label: 'Employees',       path: '/employees',        feature: 'employees' },
+  { label: 'Expenses',        path: '/expenses',          feature: 'expenses' },
+  { label: 'Reports',         path: '/reports',           feature: 'reports' },
+  { label: 'Analytics',       path: '/analytics',        feature: 'analytics' },
 ];
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+
+  // Super admin ne is tenant ke liye jo features enable kiye hain
+  // (ya plan ke defaults, agar super admin ne override nahi kiya) —
+  // yehi decide karta hai ki sidebar me konsa link dikhega.
+  const enabledFeatures = user?.tenant?.enabled_features || [];
+  const NAV_LINKS = BASE_NAV_LINKS.filter(
+    (link) => link.feature === null || enabledFeatures.includes(link.feature)
+  );
 
   const [stats,        setStats]        = useState(null);
   const [lowStock,     setLowStock]     = useState([]);
@@ -36,20 +47,27 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [s, ls, r, td, a, an] = await Promise.all([
+        const calls = [
           api.get('/dashboard/stats'),
           api.get('/dashboard/low-stock'),
           api.get('/dashboard/today-reservations'),
           api.get('/dashboard/top-dishes'),
           api.get('/dashboard/recent-activity'),
-          api.get('/analytics/dashboard'),
-        ]);
-        setStats(s.data.data);
-        setLowStock(ls.data.data);
-        setReservations(r.data.data);
-        setTopDishes(td.data.data);
-        setActivity(a.data.data);
-        setAnalytics(an.data.data);
+          // Analytics sirf tab call karo jab tenant ke paas ye feature ho —
+          // warna backend 403 dega aur Promise.all reject ho jayega.
+          enabledFeatures.includes('analytics') ? api.get('/analytics/dashboard') : Promise.resolve(null),
+        ];
+
+        // allSettled — ek feature-gated call fail ho bhi jaye to baaki
+        // dashboard data phir bhi load ho jaye.
+        const [s, ls, r, td, a, an] = await Promise.allSettled(calls);
+
+        if (s.status  === 'fulfilled') setStats(s.value.data.data);
+        if (ls.status === 'fulfilled') setLowStock(ls.value.data.data);
+        if (r.status  === 'fulfilled') setReservations(r.value.data.data);
+        if (td.status === 'fulfilled') setTopDishes(td.value.data.data);
+        if (a.status  === 'fulfilled') setActivity(a.value.data.data);
+        if (an.status === 'fulfilled' && an.value) setAnalytics(an.value.data.data);
       } catch (err) {
         console.error('Dashboard fetch failed:', err);
       } finally {
@@ -150,7 +168,7 @@ const Dashboard = () => {
 
       {/* Nav Links */}
       <div style={styles.navBar}>
-        {BASE_NAV_LINKS.map(link => (
+        {NAV_LINKS.map(link => (
           <button key={link.path} onClick={() => navigate(link.path)} className="rdash-nav-btn">
             {link.label}
           </button>

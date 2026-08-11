@@ -1,6 +1,6 @@
 // src/middleware/planCheck.middleware.js
 import { Tenant } from '../models/index.js';
-import { hasFeature } from '../config/plans.js';
+import { tenantHasFeature } from '../config/plan.js';
 
 // Feature check middleware
 export const requireFeature = (feature) => {
@@ -40,12 +40,13 @@ export const requireFeature = (feature) => {
         }
       }
 
-      // Feature allowed hai is plan mein?
-      if (!hasFeature(tenant.plan, feature)) {
+      // Feature allowed hai (plan ke defaults se, ya super admin ke
+      // diye hue custom override se) ?
+      if (!tenantHasFeature(tenant, feature)) {
         return res.status(403).json({
           success: false,
           code:    'FEATURE_NOT_AVAILABLE',
-          message: `Ye feature aapke current plan mein available nahi hai.`,
+          message: `Ye feature aapke account ke liye available nahi hai. Apne platform admin se contact karo.`,
           current_plan: tenant.plan,
           upgrade_to:   feature === 'analytics' ? 'enterprise' : 'growth'
         });

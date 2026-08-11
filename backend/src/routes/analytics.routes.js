@@ -1,9 +1,10 @@
 import express from 'express';
 import * as analyticsController from '../controllers/analytics.controller.js';
 import authMiddleware from '../middleware/auth.middleware.js';
-
+import { requireFeature } from '../middleware/planCheck.middleware.js';
 const router = express.Router();
 
+router.use(authMiddleware, requireFeature('analytics'));
 router.get('/dashboard',         authMiddleware, analyticsController.getDashboardAnalytics);
 router.get('/peak-hours',        authMiddleware, analyticsController.getPeakHours);
 router.get('/revenue-by-day',    authMiddleware, analyticsController.getRevenueByDay);

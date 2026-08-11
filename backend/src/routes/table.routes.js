@@ -3,6 +3,9 @@ const router = express.Router();
 import * as tableController from '../controllers/table.controller.js'
 import authMiddleware from '../middleware/auth.middleware.js';
 import { checkPermission } from '../middleware/permission.middleware.js';
+import { requireFeature } from '../middleware/planCheck.middleware.js';
+
+router.use(authMiddleware,requireFeature('tables'))
 
 router.get('/',authMiddleware , tableController.getAllTables);
 router.get('/:id',authMiddleware, tableController.getTableById);

@@ -9,9 +9,9 @@ import {
   deleteExpense,
   getExpenseSummary
 } from '../controllers/expense.controller.js';
-
+import { requireFeature } from '../middleware/planCheck.middleware.js';
 const router = express.Router();
-
+router.use(authMiddleware,requireFeature('expenses'));
 // summary pehle — /:id se pehle
 router.get('/summary', authMiddleware, getExpenseSummary);
 router.get('/',        authMiddleware, getAllExpenses);

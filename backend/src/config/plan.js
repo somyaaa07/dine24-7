@@ -109,3 +109,46 @@ export const hasFeature = (planName, feature) => {
   const features = getPlanFeatures(planName);
   return features.includes(feature);
 };
+
+// Har feature ka poora catalog — super admin isi list se checkbox banata hai
+// jab kisi tenant ko individually feature de/le raha ho.
+export const ALL_FEATURES = [
+  { key: 'tables',           label: 'Tables' },
+  { key: 'menu',              label: 'Menu' },
+  { key: 'pos',                label: 'POS' },
+  { key: 'kds',                label: 'Kitchen Display (KDS)' },
+  { key: 'inventory',        label: 'Inventory' },
+  { key: 'recipes',           label: 'Recipes' },
+  { key: 'suppliers',        label: 'Suppliers' },
+  { key: 'purchase_orders',  label: 'Purchase Orders' },
+  { key: 'customers',        label: 'Customers' },
+  { key: 'reservations',     label: 'Reservations' },
+  { key: 'employees',        label: 'Employees' },
+  { key: 'expenses',          label: 'Expenses' },
+  { key: 'reports',           label: 'Reports' },
+  { key: 'analytics',        label: 'Analytics' },
+  { key: 'notifications',    label: 'Notifications' },
+  { key: 'qr_ordering',      label: 'QR Ordering' },
+  { key: 'dashboard',        label: 'Dashboard' },
+  { key: 'multi_branch',     label: 'Multi Branch' },
+];
+
+export const ALL_FEATURE_KEYS = ALL_FEATURES.map((f) => f.key);
+
+// Tenant ke effective features nikalo:
+// - Agar super admin ne is tenant ke liye custom features set kiye hain
+//   (tenant.enabled_features array me kuch hai), to WAHI final list hai.
+// - Warna tenant ke plan ke default features use ho jayenge.
+export const getEffectiveFeatures = (tenant) => {
+  if (!tenant) return [];
+  if (Array.isArray(tenant.enabled_features) && tenant.enabled_features.length > 0) {
+    return tenant.enabled_features;
+  }
+  return getPlanFeatures(tenant.plan);
+};
+
+// Ek tenant object (Sequelize instance ya plain object) ke against
+// check karo ki feature allowed hai ya nahi — plan + super-admin override dono.
+export const tenantHasFeature = (tenant, feature) => {
+  return getEffectiveFeatures(tenant).includes(feature);
+};

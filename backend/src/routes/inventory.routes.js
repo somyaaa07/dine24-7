@@ -2,9 +2,10 @@ import express from 'express';
 import * as inventoryController from '../controllers/inventory.controller.js';
 import authMiddleware from '../middleware/auth.middleware.js';
 import { checkPermission } from '../middleware/permission.middleware.js';
-
+import { requireFeature } from '../middleware/planCheck.middleware.js';
 const router = express.Router();
 
+router.use(authMiddleware,requireFeature('inventory'))
 router.get('/',authMiddleware,inventoryController.getAllItem);
 // SAHI ORDER ✅ — specific routes pehle, dynamic baad mein
 router.get('/low-stock', authMiddleware, inventoryController.getLowStockItems);

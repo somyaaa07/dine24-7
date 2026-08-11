@@ -34,6 +34,11 @@ Tenant.init(
         },
         trial_ends_at:{
             type:DataTypes.DATE
+        },
+        enabled_features:{
+            type:DataTypes.JSON,
+            allowNull:true,
+            defaultValue:null
         }
 
     },
