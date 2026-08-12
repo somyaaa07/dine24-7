@@ -9,7 +9,7 @@ export const getPublicMenu = async (req, res) => {
 
     const profile   = await ResturantProfile.findOne({ where: { tenant_id } });
     const tableInfo = table
-      ? await Table.findOne({ where: { tenant_id, table_number: table, is_active: true } })
+      ? await Tables.findOne({ where: { tenant_id, table_number: table, is_active: true } })
       : null;
 
     const menu = await MenuCategory.findAll({
@@ -27,7 +27,7 @@ export const getPublicMenu = async (req, res) => {
       success: true,
       data: {
         restaurant: {
-          name:            profile?.restaurant_name || 'Restaurant',
+          name:            profile?.resturant_name || 'Restaurant',
           logo:            profile?.logo_url,
           currency_symbol: profile?.currency_symbol || '₹'
         },
@@ -57,7 +57,7 @@ export const placeQROrder = async (req, res) => {
 
   // FIX — validate table before transaction
   if (table_id) {
-    const table = await Table.findOne({ where: { id: table_id, tenant_id, is_active: true } });
+    const table = await Tables.findOne({ where: { id: table_id, tenant_id, is_active: true } });
     if (!table) {
       return res.status(400).json({ success: false, message: 'Invalid table' });
     }
@@ -147,7 +147,7 @@ export const placeQROrder = async (req, res) => {
       table_id:        table_id || null,
       order_number,
       status:          'pending',
-      order_type:      table_id ? 'dine_in' : 'takeaway',
+      order_type:      table_id ? 'dine-in' : 'takeaway',
       subtotal,
       tax_amount,
       discount_amount: 0,
@@ -162,7 +162,7 @@ export const placeQROrder = async (req, res) => {
     }
 
     if (table_id) {
-      await Table.update(
+      await Tables.update(
         { status: 'occupied' },
         { where: { id: table_id, tenant_id }, transaction }
       );

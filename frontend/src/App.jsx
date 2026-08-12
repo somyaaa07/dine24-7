@@ -25,6 +25,8 @@ import Reports         from './pages/Reports';
 import Analytics       from './pages/Analytics';
 import SuperAdmin      from './pages/SuperAdmin';
 import Orders          from './pages/Order';
+import QrOrder         from './pages/QrOrder';
+
 
 // Protected Route wrapper — waits for the initial /auth/me check before
 // deciding, and (optionally) enforces a required role, e.g. requiredRole="super_admin".
@@ -93,6 +95,7 @@ const App = () => {
         <Route path="/register" element={
           <PublicRoute><Register /></PublicRoute>
         } />
+        <Route path="/order" element={<QrOrder />} />
 
         {/* ── Protected Routes ───────────────────────────── */}
         <Route path="/dashboard" element={

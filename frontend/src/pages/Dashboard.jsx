@@ -361,7 +361,7 @@ const styles = {
   cardLink: { background: 'none', border: 'none', color: '#A97E44', fontSize: '12px', fontWeight: '700', cursor: 'pointer', padding: '10px 0 0', fontFamily: "'JetBrains Mono', monospace" },
 
   quickActions: { display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '4px' },
-  quickBtn: { background: '#1A1815', color: '#F7F5F0', border: 'none', borderRadius: '4px', padding: '11px 20px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace', letterSpacing: '0.04em", transition: 'background 0.15s' },
+  quickBtn: { background: '#1A1815', color: '#F7F5F0', border: 'none', borderRadius: '4px', padding: '11px 20px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.04em', transition: 'background 0.15s' },
 };
 
 export default Dashboard;

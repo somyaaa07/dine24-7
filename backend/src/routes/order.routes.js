@@ -11,6 +11,8 @@ router.use(authMiddleware,requireFeature('orders'));
 router.get('/active',authMiddleware,orderController.getActiveOrders);
 router.get('/',authMiddleware,orderController.getAllOrders);
 router.get('/:id',authMiddleware,orderController.getOrderById);
+router.get('/:id/kot',authMiddleware,orderController.getKOT);
+router.get('/:id/bill',authMiddleware,orderController.getBill);
 
 //post router
 router.post('/',authMiddleware,orderController.createOrder);

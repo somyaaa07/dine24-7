@@ -1,10 +1,11 @@
 import nodemailer from 'nodemailer';
 import {User , Tenant , Order,InventoryItem} from '../models/index.js';
 
+const emailPort = parseInt(process.env.EMAIL_PORT, 10) || 587;
 const transporter = nodemailer.createTransport({
     host:process.env.EMAIL_HOST,
-    port:process.env.EMAIL_PORT,
-    secure:true,
+    port:emailPort,
+    secure:emailPort === 465,
     auth:{
         user:process.env.EMAIL_USER,
         pass:process.env.EMAIL_PASS
@@ -33,10 +34,10 @@ export const lowStockNotification = async(req,res)=>{
         const tenant_id = req.user.tenant_id
         const tenant = await Tenant.findByPk(tenant_id)
 
-        const owner = await User.findOne({where:{tenant_id},include:[]})
+        const owner = await User.findOne({where:{tenant_id},order:[['createdAt','ASC']]})
 
-        const items = await InventoryItem.findAll({tenant_id,is_active:true})
-        const lowItems = items.filter(i=> parseFloat(i.current_quantity)<=parseFloat(i.minimum_thresshold));
+        const items = await InventoryItem.findAll({where:{tenant_id,is_active:true}})
+        const lowItems = items.filter(i=> parseFloat(i.current_quantity)<=parseFloat(i.minimum_threshold));
 
         if(lowItems.length === 0){
             return res.status(200).json({
@@ -45,7 +46,7 @@ export const lowStockNotification = async(req,res)=>{
             })
         }
 
-        const itemList = lowItems.map(i=>`<li>${i.name}:${i.current_quantity} ${i.unit} remaining (min:${i.minimum_thresshold})</li>`).join('');
+        const itemList = lowItems.map(i=>`<li>${i.name}:${i.current_quantity} ${i.unit} remaining (min:${i.minimum_threshold})</li>`).join('');
         const html = `<h2>
         Low Stock Alert - ${tenant.name} </h2>
         <ul>${itemList}</ul>
@@ -122,7 +123,7 @@ export const sendCustomEmail = async (req, res) => {
       return res.status(400).json({ success: false, message: 'to, subject, message required' });
     }
     const html = `<div style="font-family:Arial,sans-serif;padding:24px;">${message}</div>`;
-    const sent = await sendEmail(to, subject, html);
+    const sent = await sendEMail(to, subject, html);
     return res.status(200).json({ success: sent, message: sent ? 'Email sent' : 'Email failed' });
   } catch (error) {
     console.error('sendCustomEmail failed:', error);

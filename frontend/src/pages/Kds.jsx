@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import PrintReceipt from '../components/PrintReceipt';
 
 const STATUS_CONFIG = {
   pending:   { bg: '#2A2418', border: '#C99A5B', color: '#E7C48F', label: 'NEW',       icon: '🔴' },
@@ -14,6 +15,7 @@ const KDS = () => {
   const [orders,   setOrders]   = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [lastFetch, setLastFetch] = useState(null);
+  const [printOrderId, setPrintOrderId] = useState(null);
 
   // ── Auto refresh — every 15 seconds ──────────────────────
   const fetchOrders = useCallback(async () => {
@@ -265,6 +267,12 @@ const KDS = () => {
                     }}>
                       {urgent && '🚨 '}{getElapsedTime(order.createdAt)}
                     </span>
+                    <button
+                      onClick={() => setPrintOrderId(order.id)}
+                      style={{ marginLeft: 8, fontSize: 12, padding: '4px 8px', cursor: 'pointer' }}
+                    >
+                      🖨️ KOT
+                    </button>
                   </div>
                 </div>
 
@@ -340,6 +348,14 @@ const KDS = () => {
             );
           })}
         </div>
+      )}
+
+      {printOrderId && (
+        <PrintReceipt
+          type="kot"
+          orderId={printOrderId}
+          onClose={() => setPrintOrderId(null)}
+        />
       )}
     </div>
   );

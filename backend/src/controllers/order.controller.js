@@ -592,6 +592,93 @@ export const cancelOrder = async (req, res) => {
     }
 }
 
+// Kitchen Order Ticket - what the kitchen needs to prepare (no prices)
+export const getKOT = async (req, res) => {
+    try {
+        const tenant_id = req.user.tenant_id;
+        const { id } = req.params;
+
+        const order = await Order.findOne({
+            where: { id, tenant_id },
+            include: [
+                { model: Tables, attributes: ['id', 'table_number', 'section'] },
+                { model: OrderItem, attributes: ['id', 'name', 'quantity', 'note', 'status'] }
+            ]
+        });
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                order_number: order.order_number,
+                table: order.Table ? order.Table.table_number : 'Takeaway',
+                order_type: order.order_type,
+                created_at: order.createdAt,
+                note: order.note,
+                items: order.OrderItems.map(i => ({
+                    name: i.name,
+                    quantity: i.quantity,
+                    note: i.note
+                }))
+            }
+        });
+    } catch (error) {
+        console.log("getKOT failed", error);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+// Customer bill/invoice - items + prices + tax + total
+export const getBill = async (req, res) => {
+    try {
+        const tenant_id = req.user.tenant_id;
+        const { id } = req.params;
+
+        const order = await Order.findOne({
+            where: { id, tenant_id },
+            include: [
+                { model: Tables, attributes: ['id', 'table_number'] },
+                { model: OrderItem, attributes: ['id', 'name', 'quantity', 'unit_price', 'total_price'] }
+            ]
+        });
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        const profile = await ResturantProfile.findOne({ where: { tenant_id } });
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                restaurant_name: profile?.resturant_name || 'Restaurant',
+                currency_symbol: profile?.currency_symbol || '\u20b9',
+                order_number: order.order_number,
+                table: order.Table ? order.Table.table_number : 'Takeaway',
+                created_at: order.createdAt,
+                items: order.OrderItems.map(i => ({
+                    name: i.name,
+                    quantity: i.quantity,
+                    unit_price: i.unit_price,
+                    total_price: i.total_price
+                })),
+                subtotal: order.subtotal,
+                tax_amount: order.tax_amount,
+                discount_amount: order.discount_amount,
+                total_amount: order.final_amount || order.total_amount,
+                payment_method: order.payment_method,
+                payment_status: order.payment_status
+            }
+        });
+    } catch (error) {
+        console.log("getBill failed", error);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
 export const getActiveOrders = async (req, res) => {
     try {
         const tenant_id = req.user.tenant_id;

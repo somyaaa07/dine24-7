@@ -312,6 +312,7 @@ export const genratePayroll = async(req,res)=>{
 
             if(existing){
                 results.push(existing)
+                continue
             }
 
             const attendance = await Attendance.findAll({
@@ -362,9 +363,9 @@ export const genratePayroll = async(req,res)=>{
                 month,
                 year,
                 days_worked,
-                day_absent,
-                basicSalary,
-                deduction,
+                days_absent: day_absent,
+                basic_salary: basicSalary,
+                deductions: deduction,
                 bonuses:0,
                 net_salary
 
@@ -431,7 +432,7 @@ export const getPayroll = async (req,res)=>{
 export const markPayrollPaid = async(req,res)=>{
     try{
         const tenant_id = req.user.tenant_id;
-        const {id} = req.bdoy;
+        const {id} = req.params;
 
         const payroll = await Payroll.findOne({
             where:{

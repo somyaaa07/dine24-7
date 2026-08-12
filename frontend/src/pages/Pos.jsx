@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import PrintReceipt from '../components/PrintReceipt';
 
 const POS = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const POS = () => {
   const [showPayment,    setShowPayment]    = useState(false);
   const [paymentMethod,  setPaymentMethod]  = useState('cash');
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [printBillOrderId, setPrintBillOrderId] = useState(null);
   const [currentOrder,   setCurrentOrder]   = useState(null);
 
   // Order type
@@ -140,6 +142,7 @@ const POS = () => {
       });
 
       showMsg('success', 'Payment collected!');
+      setPrintBillOrderId(currentOrder.id);
       setShowPayment(false);
       setCurrentOrder(null);
       setActiveTable(null);
@@ -543,6 +546,14 @@ const POS = () => {
           )}
         </div>
       </div>
+
+      {printBillOrderId && (
+        <PrintReceipt
+          type="bill"
+          orderId={printBillOrderId}
+          onClose={() => setPrintBillOrderId(null)}
+        />
+      )}
     </div>
   );
 };
