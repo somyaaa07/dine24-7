@@ -4,7 +4,7 @@ import authMiddleware from '../middleware/auth.middleware.js';
 import { requireFeature } from '../middleware/planCheck.middleware.js';
 const router = express.Router();
 
-router.use(authMiddleware,requireFeature('reservation'))
+router.use(authMiddleware,requireFeature('reservations'))
 router.get('/',authMiddleware,reservationController.getAllReservations);
 router.get('/today',authMiddleware,reservationController.getTodayReservation);
 router.get('/:id',authMiddleware,reservationController.getReservationId);

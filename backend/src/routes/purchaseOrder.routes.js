@@ -5,7 +5,7 @@ import { checkPermission } from '../middleware/permission.middleware.js';
 import { requireFeature } from '../middleware/planCheck.middleware.js';
 
 const router = express.Router();
-router.use(authMiddleware, requireFeature('purchase_order'));
+router.use(authMiddleware, requireFeature('purchase_orders'));
 router.get('/',     authMiddleware, poController.getAllPurchaseOrders);
 router.get('/:id',  authMiddleware, poController.getPurchaseOrderById);
 router.post('/',    authMiddleware, checkPermission('inventory'), poController.createPurchaseOrder);

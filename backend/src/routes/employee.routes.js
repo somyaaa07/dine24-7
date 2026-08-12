@@ -4,7 +4,7 @@ import authMiddleware from '../middleware/auth.middleware.js';
 import { requireFeature } from '../middleware/planCheck.middleware.js';
 const router = express.Router();
 
-router.use(authMiddleware,requireFeature('employee'));
+router.use(authMiddleware,requireFeature('employees'));
 // attendance 
 router.post('/attendance',authMiddleware,employeeController.markAttendance);
 router.get('/attendance/records',authMiddleware,employeeController.getAttendance);
