@@ -42,11 +42,10 @@ export const getEmployeeById = async(req,res)=>{
             })
         }
 
-        const recentAttendance = await Attendance.findOne({
+        const recentAttendance = await Attendance.findAll({
             where:{
                 tenant_id,
-                employee_id:id,
-                is_active:true
+                employee_id:id
             },
             order:[['date','DESC']] , limit:30
         });
@@ -330,7 +329,7 @@ export const genratePayroll = async(req,res)=>{
                     return total+1
                 }
 
-                if(record.status === 'half-day'){
+                if(record.status === 'half_day'){
                     return total+0.5
                 }
 
@@ -347,7 +346,7 @@ export const genratePayroll = async(req,res)=>{
 
             const perDay = monthSalary/dayInMonth
 
-            const halfDayCount = attendance.filter(record => record.status === 'half-day').length
+            const halfDayCount = attendance.filter(record => record.status === 'half_day').length
 
             const unpaidDays = day_absent + (halfDayCount * 0.5)
 

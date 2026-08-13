@@ -167,7 +167,7 @@ export const createRecipe = async (req, res) => {
         }
 
         const existingRecipe = await Recipe.findOne({
-            menu_item_id, tenant_id, is_active: true
+            where: { menu_item_id, tenant_id, is_active: true }
         })
 
         if (existingRecipe) {
@@ -298,38 +298,39 @@ export const updateRecipe = async (req, res) => {
                 },
                 transaction
             })
-        }
 
-        for(const ing of ingredients){
-            if(!ing.inventory_item_id || !ing.quantity)
-                continue
-        
+            for(const ing of ingredients){
+                if(!ing.inventory_item_id || !ing.quantity)
+                    continue
 
-        const invItem = await InventoryItem.findOne({
-            where:{
-                id:ing.inventory_item_id,
-                tenant_id,
-                is_active:true
+                const invItem = await InventoryItem.findOne({
+                    where:{
+                        id:ing.inventory_item_id,
+                        tenant_id,
+                        is_active:true
+                    }
+                })
+
+                if(!invItem){
+                    await transaction.rollback()
+                    return res.status(404).json({
+                        success:false,
+                        message:"Inventory item not found"
+                    })
+                }
+
+                await RecipeIngredients.create({
+                    tenant_id,
+                    recipe_id:recipe.id,
+                    inventory_item_id:ing.inventory_item_id,
+                    quantity:ing.quantity,
+                    unit:ing.unit
+                },{transaction})
             }
-        })
-
-        if(!invItem){
-            return res.status(404).json({
-                success:false,
-                message:"Inventory item not found"
-            })
         }
 
-        await RecipeIngredients.create({
-            tenant_id,
-            recipe_id:recipe.id,
-            inventory_item_id:ing.inventory_item_id,
-            quantity:ing.quantity,
-            unit:ing.unit
-        },{transaction})
+        await transaction.commit()
 
-        transaction.commit()
-    }
     const updatedRecipe = await Recipe.findOne({
         where:{id:recipe.id},
         include:[
@@ -411,7 +412,7 @@ export const checkAvailability = async(req,res)=>{
 
    for(const ing of recipe.RecipeIngredients){
     const required = parseFloat(ing.quantity)*quantity;
-    const available = parseFloat(ing.InventoryItem.quantity);
+    const available = parseFloat(ing.InventoryItem.current_quantity);
 
     if(available<required){
         missing.push({
