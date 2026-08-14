@@ -91,8 +91,7 @@ export const createTable = async (req, res) => {
 
         // now we're going to have QR which helps to make the online ordering
 
-        const qr_code = `${process.env.APP_URL}/qr/order?table=${table_number}&tenant=${tenant_id}}`;
-
+ const qr_code = `${process.env.APP_URL}/order?tenant_id=${tenant_id}&table=${table_number}`;
         const table = await Table.create({
             tenant_id,
             table_number,
@@ -172,8 +171,7 @@ export const createBulkTable = async (req, res) => {
                 capacity: capacity || 4,
                 section: section || 'Main Hall',
                 status: 'available',
-                qr_code: `${process.env.APP_URL}/qr/order?table=${table_number}&tenant=${tenant_id}`
-
+  qr_code: `${process.env.APP_URL}/order?tenant_id=${tenant_id}&table=${table_number}`
             });
         }
 

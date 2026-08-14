@@ -319,6 +319,23 @@ const Tables = () => {
                     </div>
                     <p style={styles.tableCapacity}>👥 {table.capacity} seats</p>
 
+                    {/* QR code for customer self-ordering */}
+                    {table.qr_code && (
+                      <div style={{ textAlign: 'center', margin: '8px 0' }}>
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(table.qr_code)}`}
+                          alt={`QR code for table ${table.table_number}`}
+                          width={100}
+                          height={100}
+                        />
+                        <div>
+                          <a href={table.qr_code} target="_blank" rel="noreferrer" style={{ fontSize: 11 }}>
+                            Open order link
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Status change */}
                     <select
                       value={table.status}

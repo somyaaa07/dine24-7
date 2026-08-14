@@ -215,7 +215,7 @@ export const createOrder = async (req, res) => {
             table_id: table_id || null,
             order_number,
             status: 'pending',
-            order_type: order_type || 'dine_in',
+            order_type: (!order_type || order_type === 'dine_in') ? 'dine-in' : order_type,
             subtotal: subTotal,
             tax_amount,
             total_amount,

@@ -324,7 +324,7 @@ export const updateRecipe = async (req, res) => {
                     recipe_id:recipe.id,
                     inventory_item_id:ing.inventory_item_id,
                     quantity:ing.quantity,
-                    unit:ing.unit
+                    unit:invItem.unit
                 },{transaction})
             }
         }

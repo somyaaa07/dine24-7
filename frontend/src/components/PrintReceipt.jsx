@@ -26,7 +26,7 @@ const PrintReceipt = ({ type, orderId, onClose }) => {
   const handlePrint = () => window.print();
 
   return (
-    <div style={s.overlay} className="pr-no-print">
+    <div style={s.overlay}>
       <style>{`
         @media print {
           body * { visibility: hidden; }

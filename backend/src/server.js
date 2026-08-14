@@ -34,7 +34,10 @@ const app = express();
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(cors({
-  origin: process.env.APP_URL || 'http://localhost:5173',
+  // origin: [process.env.APP_URL || 'http://localhost:5173','http://192.168.1.41:5173'],
+    origin: [ 'http://localhost:5173','http://192.168.1.41:5173'],
+
+  // origin: '*',
   credentials: true
 }));
 app.use(express.json());
@@ -92,7 +95,7 @@ const startServer = async () => {
     await connectDB();
     await sequelize.sync();
     console.log('Database now synced');
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0',() => {
       console.log(`Server started at: http://localhost:${PORT}`);
     });
   } catch (error) {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import PrintReceipt from '../components/PrintReceipt';
 
 const STATUS_TABS = [
   { key: '',          label: 'All' },
@@ -42,6 +43,7 @@ const Orders = () => {
   const [expandedId,   setExpandedId]   = useState(null);
   const [updatingId,   setUpdatingId]   = useState(null);
   const [msg,          setMsg]          = useState({ type: '', text: '' });
+  const [printBillOrderId, setPrintBillOrderId] = useState(null);
 
   const showMsg = (type, text) => {
     setMsg({ type, text });
@@ -292,6 +294,12 @@ const Orders = () => {
                           Cancel
                         </button>
                       )}
+                      <button
+                        className="ords-cancel-btn"
+                        onClick={() => setPrintBillOrderId(order.id)}
+                      >
+                        🖨️ Bill
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -327,6 +335,14 @@ const Orders = () => {
             );
           })}
         </div>
+      )}
+
+      {printBillOrderId && (
+        <PrintReceipt
+          type="bill"
+          orderId={printBillOrderId}
+          onClose={() => setPrintBillOrderId(null)}
+        />
       )}
     </div>
   );
