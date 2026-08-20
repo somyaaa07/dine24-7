@@ -25,6 +25,7 @@ import Attendance from "./attendance.model.js";
 import Payroll from "./payroll.model.js";
 import Employee from "./employee.model.js";
 import Expense from "./expense.model.js";
+import Shift from "./shift.model.js";
 
 //relationship management
 
@@ -151,16 +152,32 @@ Expense.belongsTo(Tenant,{foreignKey:"tenant_id"});
 User.hasMany(Expense,{foreignKey:"added_by"});
 Expense.belongsTo(User,{foreignKey:"added_by"});
 
-Employee.hasMany(Payroll,{foreignKey:"empolyee_id"});
-Payroll.belongsTo(Employee,{foreignKey:"empolyee_id"});
+// Employee.hasMany(Payroll,{foreignKey:"empolyee_id"});
+// Payroll.belongsTo(Employee,{foreignKey:"empolyee_id"});
 
-Employee.hasMany(Attendance,{foreignKey:"empolyee_id"});
-Attendance.belongsTo(Employee,{foreignKey:"empolyee_id"});
+// Employee.hasMany(Attendance,{foreignKey:"empolyee_id"});
+// Attendance.belongsTo(Employee,{foreignKey:"empolyee_id"});
+
+// Tenant.hasMany(Attendance,{foreignKey:"tenant_id"});
+// Attendance.belongsTo(Tenant,{foreignKey:"tenant_id"});
+
+Employee.hasMany(Payroll,{foreignKey:"employee_id"});
+Payroll.belongsTo(Employee,{foreignKey:"employee_id"});
+
+Employee.hasMany(Attendance,{foreignKey:"employee_id"});
+Attendance.belongsTo(Employee,{foreignKey:"employee_id"});
 
 Tenant.hasMany(Attendance,{foreignKey:"tenant_id"});
 Attendance.belongsTo(Tenant,{foreignKey:"tenant_id"});
 
+Tenant.hasMany(Shift,{foreignKey:"tenant_id"});
+Shift.belongsTo(Tenant,{foreignKey:"tenant_id"});
 
+Shift.hasMany(Employee,{foreignKey:"shift_id"});
+Employee.belongsTo(Shift,{foreignKey:"shift_id"});
+
+Shift.hasMany(Attendance,{foreignKey:"shift_id"});
+Attendance.belongsTo(Shift,{foreignKey:"shift_id"})
 export {
   sequelize,
   Tenant,
@@ -186,5 +203,6 @@ export {
   Attendance,
   Employee,
   Expense,
-  Payroll
+  Payroll,
+  Shift
 };

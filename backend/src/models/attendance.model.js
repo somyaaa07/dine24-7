@@ -30,6 +30,18 @@ Attendance.init(
             type:DataTypes.TIME,
             allowNull:true
         },
+        shift_id:{
+            type:DataTypes.UUID,
+            allowNull:true
+        },
+        late_minutes:{
+            type:DataTypes.INTEGER,
+            defaultValue:0
+        },
+        overtime_minutes:{
+            type:DataTypes.INTEGER,
+            defaultValue:0
+        },
         status:{
             type:DataTypes.ENUM('present','absent','half_day','leave'),
             defaultValue:'present'

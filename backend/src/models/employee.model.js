@@ -17,6 +17,10 @@ Empolyee.init({
         type:DataTypes.UUID,
         allowNull:true
     },
+    shift_id:{
+        type:DataTypes.UUID,
+        allowNull:true
+    },
     name:{
         type:DataTypes.STRING,
         allowNull:false

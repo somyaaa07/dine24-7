@@ -8,6 +8,8 @@ router.use(authMiddleware,requireFeature('employees'));
 // attendance 
 router.post('/attendance',authMiddleware,employeeController.markAttendance);
 router.get('/attendance/records',authMiddleware,employeeController.getAttendance);
+router.get('/attendance/by-date',authMiddleware,employeeController.getAttendanceByDate);
+router.post('/attendance/bulk',authMiddleware,employeeController.markBulkAttendance);
 router.post('/payroll/generate',authMiddleware,employeeController.genratePayroll)
 router.get('/payroll/list',authMiddleware,employeeController.getPayroll);
 router.put('/payroll/:id/paid',authMiddleware,employeeController.markPayrollPaid);

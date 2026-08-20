@@ -28,6 +28,7 @@ import notificationsRoutes   from './routes/notification.routes.js';
 import qrOrderRoutes         from './routes/qr.routes.js';
 import analyticsRoutes       from './routes/analytics.routes.js';
 import superAdminRoutes      from './routes/superAdmin.routes.js';
+import shiftRoutes           from './routes/shift.routes.js';
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use('/api/v1/notifications',   notificationsRoutes);
 app.use('/api/v1/qr',              qrOrderRoutes);
 app.use('/api/v1/analytics',       analyticsRoutes);
 app.use('/api/v1/super-admin',     superAdminRoutes);
+app.use('/api/v1/shifts',          shiftRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

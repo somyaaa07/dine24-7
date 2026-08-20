@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
 const ROLES = ['manager','waiter','chef','cashier','cleaner','delivery','other'];
-const TABS  = ['employees','attendance','payroll'];
+const TABS  = ['employees','shifts','attendance','payroll'];
 
-const EMPTY_EMP = { name:'', email:'', phone:'', role:'waiter', salary:'', salary_type:'monthly', join_date:'', address:'', emergency_contact:'' };
+const EMPTY_EMP = { name:'', email:'', phone:'', role:'waiter', salary:'', salary_type:'monthly', join_date:'', address:'', emergency_contact:'', shift_id:'' };
 const EMPTY_ATT = { employee_id:'', date: new Date().toISOString().split('T')[0], status:'present', check_in:'', check_out:'', note:'' };
+const EMPTY_SHIFT = { name:'', start_time:'09:00', end_time:'17:00', grace_minutes:10 };
 
 const Employees = () => {
   const navigate = useNavigate();
@@ -14,6 +15,9 @@ const Employees = () => {
   const [employees,   setEmployees]   = useState([]);
   const [attendance,  setAttendance]  = useState([]);
   const [payrolls,    setPayrolls]    = useState([]);
+  const [shifts,      setShifts]      = useState([]);
+  const [showShiftForm, setShowShiftForm] = useState(false);
+  const [shiftForm,   setShiftForm]   = useState(EMPTY_SHIFT);
   const [loading,     setLoading]     = useState(true);
   const [msg,         setMsg]         = useState({ type:'', text:'' });
   const [showEmpForm, setShowEmpForm] = useState(false);
@@ -25,15 +29,90 @@ const Employees = () => {
   const [payYear,     setPayYear]     = useState(new Date().getFullYear());
   const [attMonth,    setAttMonth]    = useState(new Date().getMonth() + 1);
   const [attYear,     setAttYear]     = useState(new Date().getFullYear());
+  const [attView,     setAttView]     = useState('monthly'); // 'monthly' | 'byDate'
+  const [attDate,     setAttDate]     = useState(new Date().toISOString().split('T')[0]);
+  const [dateGrid,    setDateGrid]    = useState([]);
+  const [savingGrid,  setSavingGrid]  = useState(false);
 
   const fetchEmployees = async () => {
     try { const r = await api.get('/employees'); setEmployees(r.data.data); }
     catch(e) { console.error(e); }
   };
 
+  const fetchShifts = async () => {
+    try { const r = await api.get('/shifts'); setShifts(r.data.data); }
+    catch(e) { console.error(e); }
+  };
+
+  const handleShiftSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/shifts', shiftForm);
+      showMsg('success', 'Shift created!');
+      setShiftForm(EMPTY_SHIFT); setShowShiftForm(false); fetchShifts();
+    } catch(err) { showMsg('error', err.response?.data?.message || 'Could not create shift'); }
+  };
+
+  const handleSeedShifts = async () => {
+    try {
+      const r = await api.post('/shifts/seed-defaults');
+      showMsg('success', r.data.message || 'Default shifts created!');
+      fetchShifts();
+    } catch(err) { showMsg('error', err.response?.data?.message || 'Could not create default shifts'); }
+  };
+
+  const handleDeleteShift = async (id) => {
+    if (!window.confirm('Delete this shift?')) return;
+    try {
+      await api.delete(`/shifts/${id}`);
+      showMsg('success', 'Shift deleted');
+      fetchShifts();
+    } catch(err) { showMsg('error', err.response?.data?.message || 'Could not delete shift'); }
+  };
+
   const fetchAttendance = async () => {
     try { const r = await api.get(`/employees/attendance/records?month=${attMonth}&year=${attYear}`); setAttendance(r.data.data); }
     catch(e) { console.error(e); }
+  };
+
+  const fetchDateGrid = async () => {
+    try {
+      const r = await api.get(`/employees/attendance/by-date?date=${attDate}`);
+      setDateGrid(r.data.data.employees);
+    } catch(e) { console.error(e); }
+  };
+
+  const updateGridRow = (employee_id, field, value) => {
+    setDateGrid(prev => prev.map(row =>
+      row.employee_id === employee_id ? { ...row, [field]: value } : row
+    ));
+  };
+
+  const saveDateGrid = async () => {
+    const records = dateGrid
+      .filter(row => row.status)
+      .map(row => ({
+        employee_id: row.employee_id,
+        status: row.status,
+        check_in: row.check_in || null,
+        check_out: row.check_out || null,
+        note: row.note || null
+      }));
+
+    if (records.length === 0) {
+      return showMsg('error', 'Mark at least one employee before saving');
+    }
+
+    setSavingGrid(true);
+    try {
+      const r = await api.post('/employees/attendance/bulk', { date: attDate, records });
+      showMsg('success', r.data.message || 'Attendance saved!');
+      fetchDateGrid();
+    } catch(err) {
+      showMsg('error', err.response?.data?.message || 'Could not save attendance');
+    } finally {
+      setSavingGrid(false);
+    }
   };
 
   const fetchPayroll = async () => {
@@ -44,12 +123,14 @@ const Employees = () => {
   useEffect(() => {
     const load = async () => {
       await fetchEmployees();
+      await fetchShifts();
       setLoading(false);
     };
     load();
   }, []);
 
-  useEffect(() => { if(tab === 'attendance') fetchAttendance(); }, [tab, attMonth, attYear]);
+  useEffect(() => { if(tab === 'attendance' && attView === 'monthly') fetchAttendance(); }, [tab, attMonth, attYear, attView]);
+  useEffect(() => { if(tab === 'attendance' && attView === 'byDate') fetchDateGrid(); }, [tab, attDate, attView]);
   useEffect(() => { if(tab === 'payroll') fetchPayroll(); }, [tab, payMonth, payYear]);
 
   const showMsg = (type, text) => { setMsg({ type, text }); setTimeout(() => setMsg({ type:'', text:'' }), 3000); };
@@ -255,6 +336,12 @@ const Employees = () => {
         <div style={s.headerBtns}>
           <button onClick={() => navigate('/dashboard')} className="rhr-outline-btn">← Dashboard</button>
           {tab === 'employees' && <button onClick={() => { setEditingId(null); setEmpForm(EMPTY_EMP); setShowEmpForm(true); }} className="rhr-primary-btn">+ Employee</button>}
+          {tab === 'shifts' && (
+            <>
+              <button onClick={handleSeedShifts} className="rhr-outline-btn">Seed Morning/Evening/Night</button>
+              <button onClick={() => { setShiftForm(EMPTY_SHIFT); setShowShiftForm(true); }} className="rhr-primary-btn">+ Shift</button>
+            </>
+          )}
           {tab === 'attendance' && <button onClick={() => setShowAttForm(true)} className="rhr-primary-btn">Mark Attendance</button>}
           {tab === 'payroll' && <button onClick={handleGenPayroll} className="rhr-primary-btn">Generate Payroll</button>}
         </div>
@@ -269,7 +356,7 @@ const Employees = () => {
             onClick={() => setTab(t)}
             className={`rhr-tab ${tab === t ? 'rhr-tab-active' : ''}`}
           >
-            {t === 'employees' ? '👤 Employees' : t === 'attendance' ? '📋 Attendance' : '💰 Payroll'}
+            {t === 'employees' ? '👤 Employees' : t === 'shifts' ? '🕐 Shifts' : t === 'attendance' ? '📋 Attendance' : '💰 Payroll'}
           </button>
         ))}
       </div>
@@ -301,6 +388,11 @@ const Employees = () => {
                       <option value="hourly">Hourly</option></select></div>
                   <div style={s.field}><label style={s.label}>Join Date</label>
                     <input type="date" value={empForm.join_date} onChange={e => setEmpForm({...empForm, join_date: e.target.value})} className="rhr-input" /></div>
+                  <div style={s.field}><label style={s.label}>Shift</label>
+                    <select value={empForm.shift_id} onChange={e => setEmpForm({...empForm, shift_id: e.target.value})} className="rhr-input">
+                      <option value="">-- No fixed shift --</option>
+                      {shifts.map(sh => <option key={sh.id} value={sh.id}>{sh.name} ({sh.start_time}–{sh.end_time})</option>)}
+                    </select></div>
                   <div style={s.field}><label style={s.label}>Emergency Contact</label>
                     <input value={empForm.emergency_contact} onChange={e => setEmpForm({...empForm, emergency_contact: e.target.value})} className="rhr-input" /></div>
                   <div style={s.field}><label style={s.label}>Address</label>
@@ -328,10 +420,11 @@ const Employees = () => {
                   {emp.phone && <p style={s.detail}>📞 {emp.phone}</p>}
                   {emp.email && <p style={s.detail}>✉️ {emp.email}</p>}
                   <p style={s.detail}>💰 ₹{parseFloat(emp.salary).toLocaleString()} / {emp.salary_type}</p>
+                  {emp.shift_id && <p style={s.detail}>🕐 {shifts.find(sh => sh.id === emp.shift_id)?.name || 'Shift assigned'}</p>}
                   {emp.join_date && <p style={s.detail}>📅 Joined: {emp.join_date}</p>}
                 </div>
                 <div style={s.empActions}>
-                  <button onClick={() => { setEditingId(emp.id); setEmpForm({ name: emp.name, email: emp.email||'', phone: emp.phone||'', role: emp.role, salary: emp.salary, salary_type: emp.salary_type, join_date: emp.join_date||'', address: emp.address||'', emergency_contact: emp.emergency_contact||'' }); setShowEmpForm(true); }} className="rhr-edit-btn">Edit</button>
+                  <button onClick={() => { setEditingId(emp.id); setEmpForm({ name: emp.name, email: emp.email||'', phone: emp.phone||'', role: emp.role, salary: emp.salary, salary_type: emp.salary_type, join_date: emp.join_date||'', address: emp.address||'', emergency_contact: emp.emergency_contact||'', shift_id: emp.shift_id||'' }); setShowEmpForm(true); }} className="rhr-edit-btn">Edit</button>
                   <button onClick={() => handleDeleteEmp(emp.id, emp.name)} className="rhr-delete-btn">Remove</button>
                 </div>
               </div>
@@ -340,15 +433,178 @@ const Employees = () => {
         </>
       )}
 
+      {/* SHIFTS TAB */}
+      {tab === 'shifts' && (
+        <>
+          {showShiftForm && (
+            <div style={s.formCard}>
+              <div style={s.perforation} />
+              <h3 style={s.formTitle}>New Shift</h3>
+              <form onSubmit={handleShiftSubmit}>
+                <div className="rhr-form-grid" style={s.formGrid}>
+                  <div style={s.field}><label style={s.label}>Name *</label>
+                    <input value={shiftForm.name} onChange={e => setShiftForm({...shiftForm, name: e.target.value})} className="rhr-input" placeholder="e.g. Morning" required /></div>
+                  <div style={s.field}><label style={s.label}>Start Time *</label>
+                    <input type="time" value={shiftForm.start_time} onChange={e => setShiftForm({...shiftForm, start_time: e.target.value})} className="rhr-input" required /></div>
+                  <div style={s.field}><label style={s.label}>End Time *</label>
+                    <input type="time" value={shiftForm.end_time} onChange={e => setShiftForm({...shiftForm, end_time: e.target.value})} className="rhr-input" required /></div>
+                  <div style={s.field}><label style={s.label}>Grace Period (minutes)</label>
+                    <input type="number" value={shiftForm.grace_minutes} onChange={e => setShiftForm({...shiftForm, grace_minutes: e.target.value})} className="rhr-input" /></div>
+                </div>
+                <p style={{ fontSize: 11, color: '#7A7264' }}>
+                  Tip: for a shift that crosses midnight (e.g. Night), just set End Time earlier than Start Time — 22:00 → 06:00 is handled automatically.
+                </p>
+                <div style={s.formActions}>
+                  <button type="submit" className="rhr-primary-btn">Create</button>
+                  <button type="button" onClick={() => setShowShiftForm(false)} className="rhr-outline-btn">Cancel</button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          <div className="rhr-table-wrap" style={s.tableWrap}>
+            <div style={s.perforation} />
+            <table style={s.table}>
+              <thead><tr style={s.thead}>
+                <th style={s.th}>Name</th>
+                <th style={s.th}>Start</th>
+                <th style={s.th}>End</th>
+                <th style={s.th}>Grace (min)</th>
+                <th style={s.th}>Employees on shift</th>
+                <th style={s.th}>Action</th>
+              </tr></thead>
+              <tbody>
+                {shifts.map(sh => (
+                  <tr key={sh.id} className="rhr-row" style={s.tr}>
+                    <td style={s.td}>{sh.name}</td>
+                    <td style={s.td}>{sh.start_time}</td>
+                    <td style={s.td}>{sh.end_time}</td>
+                    <td style={s.td}>{sh.grace_minutes}</td>
+                    <td style={s.td}>{employees.filter(e => e.shift_id === sh.id).length}</td>
+                    <td style={s.td}>
+                      <button onClick={() => handleDeleteShift(sh.id)} className="rhr-delete-btn">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {shifts.length === 0 && (
+              <p style={s.emptyTable}>
+                No shifts yet — click "Seed Morning/Evening/Night" for the common defaults, or "+ Shift" to create your own.
+              </p>
+            )}
+          </div>
+        </>
+      )}
+
       {/* ATTENDANCE TAB */}
       {tab === 'attendance' && (
         <>
+          <div style={s.filterRow}>
+            <button
+              className="rhr-outline-btn"
+              onClick={() => setAttView('monthly')}
+              style={{ fontWeight: attView === 'monthly' ? 700 : 400 }}
+            >
+              📅 Monthly view
+            </button>
+            <button
+              className="rhr-outline-btn"
+              onClick={() => setAttView('byDate')}
+              style={{ fontWeight: attView === 'byDate' ? 700 : 400 }}
+            >
+              🗓️ Mark by date
+            </button>
+          </div>
+
+          {attView === 'monthly' && (
           <div style={s.filterRow}>
             <select value={attMonth} onChange={e => setAttMonth(e.target.value)} className="rhr-filter-select">
               {Array.from({length:12},(_,i) => <option key={i+1} value={i+1}>{new Date(0,i).toLocaleString('en',{month:'long'})}</option>)}
             </select>
             <input type="number" value={attYear} onChange={e => setAttYear(e.target.value)} className="rhr-filter-select" style={{ width:'100px' }} />
           </div>
+          )}
+
+          {attView === 'byDate' && (
+            <>
+              <div style={s.filterRow}>
+                <input
+                  type="date"
+                  value={attDate}
+                  onChange={e => setAttDate(e.target.value)}
+                  className="rhr-filter-select"
+                />
+                <button onClick={saveDateGrid} disabled={savingGrid} className="rhr-primary-btn">
+                  {savingGrid ? 'Saving...' : `Save attendance for ${attDate}`}
+                </button>
+              </div>
+
+              <div className="rhr-table-wrap" style={s.tableWrap}>
+                <div style={s.perforation} />
+                <table style={s.table}>
+                  <thead><tr style={s.thead}>
+                    <th style={s.th}>Employee</th>
+                    <th style={s.th}>Role</th>
+                    <th style={s.th}>Shift</th>
+                    <th style={s.th}>Status</th>
+                    <th style={s.th}>Check In</th>
+                    <th style={s.th}>Check Out</th>
+                    <th style={s.th}>Late</th>
+                    <th style={s.th}>Overtime</th>
+                  </tr></thead>
+                  <tbody>
+                    {dateGrid.map(row => (
+                      <tr key={row.employee_id} className="rhr-row" style={s.tr}>
+                        <td style={s.td}>{row.name}</td>
+                        <td style={s.td}>{row.role}</td>
+                        <td style={s.td}>{row.shift_name || '—'}</td>
+                        <td style={s.td}>
+                          <select
+                            value={row.status || ''}
+                            onChange={e => updateGridRow(row.employee_id, 'status', e.target.value)}
+                            className="rhr-input"
+                          >
+                            <option value="">-- not marked --</option>
+                            <option value="present">Present</option>
+                            <option value="absent">Absent</option>
+                            <option value="half_day">Half Day</option>
+                            <option value="leave">Leave</option>
+                          </select>
+                        </td>
+                        <td style={s.td}>
+                          <input
+                            type="time"
+                            value={row.check_in || ''}
+                            onChange={e => updateGridRow(row.employee_id, 'check_in', e.target.value)}
+                            className="rhr-input"
+                          />
+                        </td>
+                        <td style={s.td}>
+                          <input
+                            type="time"
+                            value={row.check_out || ''}
+                            onChange={e => updateGridRow(row.employee_id, 'check_out', e.target.value)}
+                            className="rhr-input"
+                          />
+                        </td>
+                        <td style={{...s.td, color: row.late_minutes > 0 ? '#B33F2C' : '#7A7264'}}>
+                          {row.late_minutes > 0 ? `${row.late_minutes}m` : '—'}
+                        </td>
+                        <td style={{...s.td, color: row.overtime_minutes > 0 ? '#2E7D32' : '#7A7264'}}>
+                          {row.overtime_minutes > 0 ? `${row.overtime_minutes}m` : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {dateGrid.length === 0 && <p style={s.emptyTable}>No active employees found</p>}
+              </div>
+            </>
+          )}
+
+          {attView === 'monthly' && (
+          <>
           {showAttForm && (
             <div style={s.formCard}>
               <div style={s.perforation} />
@@ -410,6 +666,8 @@ const Employees = () => {
             </table>
             {attendance.length === 0 && <p style={s.emptyTable}>No attendance records found</p>}
           </div>
+          </>
+          )}
         </>
       )}
 
@@ -427,7 +685,7 @@ const Employees = () => {
             <table style={s.table}>
               <thead><tr style={s.thead}>
                 <th style={s.th}>Employee</th><th style={s.th}>Days Worked</th>
-                <th style={s.th}>Basic</th><th style={s.th}>Deductions</th>
+                <th style={s.th}>Basic</th><th style={s.th}>Deductions</th><th style={s.th}>Bonuses</th>
                 <th style={s.th}>Net Salary</th><th style={s.th}>Status</th><th style={s.th}>Action</th>
               </tr></thead>
               <tbody>
@@ -437,6 +695,9 @@ const Employees = () => {
                     <td style={s.td}>{p.days_worked}</td>
                     <td style={s.td}>₹{parseFloat(p.basic_salary).toFixed(0)}</td>
                     <td style={s.td}>₹{parseFloat(p.deductions).toFixed(0)}</td>
+                    <td style={{...s.td, color: parseFloat(p.bonuses) > 0 ? '#2E7D32' : '#7A7264'}}>
+                      {parseFloat(p.bonuses) > 0 ? `+₹${parseFloat(p.bonuses).toFixed(0)}` : '—'}
+                    </td>
                     <td style={s.td}><strong style={{ color: '#1A1815' }}>₹{parseFloat(p.net_salary).toFixed(0)}</strong></td>
                     <td style={s.td}>
                       <span style={{

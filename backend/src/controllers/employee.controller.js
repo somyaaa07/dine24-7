@@ -1,5 +1,39 @@
-import {Employee,Attendance,Payroll} from '../models/index.js';
+import {Employee,Attendance,Payroll,Shift} from '../models/index.js';
 import { Op } from 'sequelize';
+
+const timeToMinutes = (t) => {
+    if (!t) return null;
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+};
+
+// Compares an actual check-in/check-out against a shift's fixed timing and
+// returns how many minutes late / how many minutes of overtime were worked.
+// Handles overnight shifts (e.g. Night: 22:00 -> 06:00) where the end time
+// is numerically smaller than the start time.
+const calculateShiftDeviation = (shift, check_in, check_out) => {
+    if (!shift || !check_in || !check_out) {
+        return { late_minutes: 0, overtime_minutes: 0 };
+    }
+
+    const grace = shift.grace_minutes || 0;
+    let shiftStart = timeToMinutes(shift.start_time);
+    let shiftEnd = timeToMinutes(shift.end_time);
+    let actualIn = timeToMinutes(check_in);
+    let actualOut = timeToMinutes(check_out);
+
+    if (shiftEnd <= shiftStart) {
+        // overnight shift - push end time past midnight for comparison
+        shiftEnd += 24 * 60;
+        if (actualIn < shiftStart) actualIn += 24 * 60;
+    }
+    if (actualOut < actualIn) actualOut += 24 * 60;
+
+    const late_minutes = Math.max(0, actualIn - shiftStart - grace);
+    const overtime_minutes = Math.max(0, actualOut - shiftEnd);
+
+    return { late_minutes, overtime_minutes };
+};
 
 
 export const getAllEmployee = async(req,res)=>{
@@ -67,7 +101,7 @@ export const getEmployeeById = async(req,res)=>{
 export const createEmployee = async(req,res)=>{
     try{
         const tenant_id = req.user.tenant_id;
-        const {name,email,phone,address,role,salary,salary_type,emergency_contact,join_date} = req.body;
+        const {name,email,phone,address,role,salary,salary_type,emergency_contact,join_date,shift_id} = req.body;
         if(!name || name.trim()===''){
             return res.status(400).json({
                 success:false,
@@ -85,7 +119,8 @@ export const createEmployee = async(req,res)=>{
             salary_type:salary_type || 'monthly',
             address:address || null,
             emergency_contact:emergency_contact || null,
-            join_date:join_date||null
+            join_date:join_date||null,
+            shift_id:shift_id || null
 
         });
 
@@ -108,7 +143,7 @@ export const updateEmployee = async(req,res)=>{
     try{
         const tenant_id = req.user.tenant_id;
         const {id} = req.params;
-        const {name,email,phone,role,salary,salary_type,address,emergency_contact,join_date} = req.body;
+        const {name,email,phone,role,salary,salary_type,address,emergency_contact,join_date,shift_id} = req.body;
 
         const employee = await Employee.findOne({
             where:{id,tenant_id,is_active:true}
@@ -130,7 +165,8 @@ export const updateEmployee = async(req,res)=>{
             ...(salary_type !== undefined && {salary_type}),
             ...(address !== undefined && {address}),
             ...(emergency_contact !== undefined && {emergency_contact}),
-            ...(join_date !== undefined && {join_date})
+            ...(join_date !== undefined && {join_date}),
+            ...(shift_id !== undefined && {shift_id: shift_id || null})
         })
 
         return res.status(200).json({
@@ -201,6 +237,13 @@ export const markAttendance = async(req,res)=>{
 
         }
 
+        const employee = await Employee.findOne({ where:{ id:employee_id, tenant_id } });
+        let shift = null;
+        if (employee?.shift_id) {
+            shift = await Shift.findOne({ where:{ id:employee.shift_id, tenant_id } });
+        }
+        const { late_minutes, overtime_minutes } = calculateShiftDeviation(shift, check_in, check_out);
+
         const [attendance,created] = await Attendance.findOrCreate({
             where:{
                 tenant_id,
@@ -212,6 +255,9 @@ export const markAttendance = async(req,res)=>{
                 check_in : check_in || null,
                 check_out : check_out || null,
                 hours_worked,
+                shift_id: employee?.shift_id || null,
+                late_minutes,
+                overtime_minutes,
                 note:note || null
             }
         })
@@ -222,6 +268,9 @@ export const markAttendance = async(req,res)=>{
                 check_in : check_in || null,
                 check_out : check_out || null,
                 hours_worked,
+                shift_id: employee?.shift_id || null,
+                late_minutes,
+                overtime_minutes,
                 note:note || null
             })
         }
@@ -270,6 +319,137 @@ export const getAttendance = async (req, res) => {
   } catch (err) {
     console.log('Error in getAttendance', err);
     return res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+// One date, every active employee - with their attendance record for that
+// date already filled in if it exists (null fields if not marked yet).
+// This powers the "mark everyone at once" grid view.
+export const getAttendanceByDate = async (req, res) => {
+  try {
+    const tenant_id = req.user.tenant_id;
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ success: false, message: "date is required" });
+    }
+
+    const employees = await Employee.findAll({
+      where: { tenant_id, is_active: true },
+      attributes: ['id', 'name', 'role', 'shift_id'],
+      include: [{ model: Shift, attributes: ['id', 'name', 'start_time', 'end_time'] }],
+      order: [['name', 'ASC']]
+    });
+
+    const records = await Attendance.findAll({
+      where: { tenant_id, date }
+    });
+
+    const byEmployeeId = {};
+    records.forEach(r => { byEmployeeId[r.employee_id] = r; });
+
+    const grid = employees.map(emp => {
+      const existing = byEmployeeId[emp.id];
+      return {
+        employee_id: emp.id,
+        name: emp.name,
+        role: emp.role,
+        shift_name: emp.Shift ? emp.Shift.name : null,
+        status: existing ? existing.status : null,
+        check_in: existing ? existing.check_in : null,
+        check_out: existing ? existing.check_out : null,
+        late_minutes: existing ? existing.late_minutes : 0,
+        overtime_minutes: existing ? existing.overtime_minutes : 0,
+        note: existing ? existing.note : null,
+        already_marked: !!existing
+      };
+    });
+
+    return res.status(200).json({ success: true, data: { date, employees: grid } });
+  } catch (error) {
+    console.log("getAttendanceByDate error", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+// Save the whole grid in one request - upserts attendance for every
+// employee row that was actually filled in (status !== null); rows left
+// blank are skipped so you don't have to mark everyone every single day.
+export const markBulkAttendance = async (req, res) => {
+  try {
+    const tenant_id = req.user.tenant_id;
+    const { date, records } = req.body;
+
+    if (!date || !Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({ success: false, message: "date and records are required" });
+    }
+
+    const results = [];
+    const employeeIds = records.filter(r => r.employee_id).map(r => r.employee_id);
+    const employeesById = {};
+    if (employeeIds.length > 0) {
+        const emps = await Employee.findAll({ where: { tenant_id, id: { [Op.in]: employeeIds } } });
+        emps.forEach(e => { employeesById[e.id] = e; });
+    }
+    const shiftsById = {};
+    const shiftIds = [...new Set(Object.values(employeesById).map(e => e.shift_id).filter(Boolean))];
+    if (shiftIds.length > 0) {
+        const shifts = await Shift.findAll({ where: { tenant_id, id: { [Op.in]: shiftIds } } });
+        shifts.forEach(s => { shiftsById[s.id] = s; });
+    }
+
+    for (const rec of records) {
+      if (!rec.employee_id || !rec.status) continue;
+
+      let hours_worked = 0;
+      if (rec.check_in && rec.check_out) {
+        const [ih, im] = rec.check_in.split(":").map(Number);
+        const [oh, om] = rec.check_out.split(":").map(Number);
+        hours_worked = ((oh * 60 + om) - (ih * 60 + im)) / 60;
+      }
+
+      const emp = employeesById[rec.employee_id];
+      const shift = emp?.shift_id ? shiftsById[emp.shift_id] : null;
+      const { late_minutes, overtime_minutes } = calculateShiftDeviation(shift, rec.check_in, rec.check_out);
+
+      const [attendance, created] = await Attendance.findOrCreate({
+        where: { tenant_id, employee_id: rec.employee_id, date },
+        defaults: {
+          status: rec.status,
+          check_in: rec.check_in || null,
+          check_out: rec.check_out || null,
+          hours_worked,
+          shift_id: emp?.shift_id || null,
+          late_minutes,
+          overtime_minutes,
+          note: rec.note || null
+        }
+      });
+
+      if (!created) {
+        await attendance.update({
+          status: rec.status,
+          check_in: rec.check_in || null,
+          check_out: rec.check_out || null,
+          hours_worked,
+          shift_id: emp?.shift_id || null,
+          late_minutes,
+          overtime_minutes,
+          note: rec.note || null
+        });
+      }
+
+      results.push(attendance);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Attendance saved for ${results.length} employee(s)`,
+      data: results
+    });
+  } catch (error) {
+    console.log("markBulkAttendance error", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -352,9 +532,29 @@ export const genratePayroll = async(req,res)=>{
 
             const basicSalary = monthSalary
 
-            const deduction = unpaidDays * perDay;
+            let lateDeduction = 0;
+            let overtimeBonus = 0;
 
-            const net_salary = Math.max(0, basicSalary - deduction);
+            if (emp.shift_id) {
+                const shift = await Shift.findOne({ where: { id: emp.shift_id, tenant_id } });
+                if (shift) {
+                    let shiftStart = timeToMinutes(shift.start_time);
+                    let shiftEnd = timeToMinutes(shift.end_time);
+                    if (shiftEnd <= shiftStart) shiftEnd += 24 * 60; // overnight shift
+                    const shiftMinutes = shiftEnd - shiftStart;
+
+                    const totalLateMinutes = attendance.reduce((sum, r) => sum + (r.late_minutes || 0), 0);
+                    const totalOvertimeMinutes = attendance.reduce((sum, r) => sum + (r.overtime_minutes || 0), 0);
+
+                    const perMinuteRate = shiftMinutes > 0 ? perDay / shiftMinutes : 0;
+                    lateDeduction = totalLateMinutes * perMinuteRate;
+                    overtimeBonus = totalOvertimeMinutes * perMinuteRate * 1.5; // 1.5x rate for overtime
+                }
+            }
+
+            const deduction = (unpaidDays * perDay) + lateDeduction;
+
+            const net_salary = Math.max(0, basicSalary - deduction + overtimeBonus);
             
             const payroll = await Payroll.create({
                 tenant_id,
@@ -365,7 +565,7 @@ export const genratePayroll = async(req,res)=>{
                 days_absent: day_absent,
                 basic_salary: basicSalary,
                 deductions: deduction,
-                bonuses:0,
+                bonuses: overtimeBonus,
                 net_salary
 
             })
