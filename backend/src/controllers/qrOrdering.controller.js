@@ -44,7 +44,7 @@ export const getPublicMenu = async (req, res) => {
 // Customer places order via QR
 export const placeQROrder = async (req, res) => {
   // FIX — validate BEFORE starting transaction
-  const { tenant_id, table_id, items, customer_name, customer_phone } = req.body;
+  const { tenant_id, table_id, items, customer_name, customer_phone, customer_email } = req.body;
 
   if (!tenant_id) {
     return res.status(400).json({ success: false, message: 'tenant_id required' });
@@ -153,8 +153,11 @@ export const placeQROrder = async (req, res) => {
       discount_amount: 0,
       total_amount,
       payment_status:  'pending',
-      note:            customer_name ? `Customer: ${customer_name} ${customer_phone || ''}`.trim() : null,
-      served_by:       null
+note:            null,
+customer_name:   customer_name || null,
+customer_phone:  customer_phone || null,
+customer_email:  customer_email || null,
+served_by:       null
     }, { transaction });
 
     for (const item of itemDetails) {

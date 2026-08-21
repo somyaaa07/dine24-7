@@ -8,12 +8,16 @@ const PrintReceipt = ({ type, orderId, onClose }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [emailTo, setEmailTo] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailMsg, setEmailMsg] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await api.get(`/orders/${orderId}/${type}`);
         setData(res.data.data);
+        if (res.data.data?.customer_email) setEmailTo(res.data.data.customer_email);
       } catch (err) {
         setError(err?.response?.data?.message || 'Could not load receipt');
       } finally {
@@ -24,6 +28,20 @@ const PrintReceipt = ({ type, orderId, onClose }) => {
   }, [type, orderId]);
 
   const handlePrint = () => window.print();
+
+  const handleEmailSend = async () => {
+    if (!emailTo) return setEmailMsg('Enter an email address first');
+    setSendingEmail(true);
+    setEmailMsg('');
+    try {
+      const res = await api.post(`/orders/${orderId}/bill/email`, { to_email: emailTo });
+      setEmailMsg(res.data.message || 'Bill emailed!');
+    } catch (err) {
+      setEmailMsg(err?.response?.data?.message || 'Could not send email');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
 
   return (
     <div style={s.overlay}>
@@ -82,6 +100,22 @@ const PrintReceipt = ({ type, orderId, onClose }) => {
           </div>
         )}
 
+        {type === 'bill' && data && (
+          <div className="pr-no-print" style={s.emailBox}>
+            <input
+              type="email"
+              placeholder="customer@email.com"
+              value={emailTo}
+              onChange={e => setEmailTo(e.target.value)}
+              style={s.emailInput}
+            />
+            <button style={s.emailBtn} onClick={handleEmailSend} disabled={sendingEmail}>
+              {sendingEmail ? 'Sending...' : '✉️ Email Bill'}
+            </button>
+            {emailMsg && <p style={s.emailMsg}>{emailMsg}</p>}
+          </div>
+        )}
+
         <div className="pr-no-print" style={s.actions}>
           <button style={s.printBtn} onClick={handlePrint} disabled={!data}>Print</button>
           <button style={s.closeBtn} onClick={onClose}>Close</button>
@@ -102,6 +136,10 @@ const s = {
   actions: { display: 'flex', gap: 8, marginTop: 16 },
   printBtn: { flex: 1, background: '#1A1815', color: '#fff', border: 'none', borderRadius: 4, padding: '10px 0', cursor: 'pointer', fontWeight: 700 },
   closeBtn: { flex: 1, background: '#fff', border: '1px solid #D8D1C2', borderRadius: 4, padding: '10px 0', cursor: 'pointer' },
+  emailBox: { marginTop: 16, paddingTop: 12, borderTop: '1px dashed #D8D1C2' },
+  emailInput: { width: '100%', boxSizing: 'border-box', padding: 8, border: '1px solid #D8D1C2', borderRadius: 4, marginBottom: 6, fontSize: 13 },
+  emailBtn: { width: '100%', background: '#fff', border: '1px solid #1A1815', color: '#1A1815', borderRadius: 4, padding: '8px 0', cursor: 'pointer', fontWeight: 700 },
+  emailMsg: { fontSize: 12, color: '#7A7264', marginTop: 6, textAlign: 'center' },
 };
 
 export default PrintReceipt;

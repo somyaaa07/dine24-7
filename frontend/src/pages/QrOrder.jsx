@@ -15,6 +15,7 @@ const QrOrder = () => {
   const [cart, setCart] = useState({}); // { `${menuItemId}:${variantId||''}`: { menu_item_id, menu_variant_id, name, price, quantity } }
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [placing, setPlacing] = useState(false);
   const [placedOrder, setPlacedOrder] = useState(null);
   const [trackData, setTrackData] = useState(null);
@@ -91,7 +92,8 @@ const QrOrder = () => {
           quantity: it.quantity
         })),
         customer_name: customerName || undefined,
-        customer_phone: customerPhone || undefined
+        customer_phone: customerPhone || undefined,
+        customer_email: customerEmail || undefined
       };
       const res = await api.post('/qr/order', payload);
       setPlacedOrder(res.data.data);
@@ -210,6 +212,13 @@ const QrOrder = () => {
               onChange={e => setCustomerPhone(e.target.value)}
               style={s.input}
             />
+            <input
+  placeholder="Email (optional, to receive your bill)"
+  type="email"
+  value={customerEmail}
+  onChange={e => setCustomerEmail(e.target.value)}
+  style={s.input}
+/>
           </div>
           <button style={s.primaryBtn} disabled={placing} onClick={placeOrder}>
             {placing ? 'Placing…' : `Place order — ₹${cartTotal.toFixed(0)}`}

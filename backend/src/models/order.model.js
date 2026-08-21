@@ -78,10 +78,23 @@ Order.init({
         ),
         defaultValue:'pending'
     },
+
     note:{
         type:DataTypes.TEXT,
         allowNull:true
     },
+    customer_name:{
+    type:DataTypes.STRING,
+    allowNull:true
+},
+customer_email:{
+    type:DataTypes.STRING,
+    allowNull:true
+},
+customer_phone:{
+    type:DataTypes.STRING,
+    allowNull:true
+},
     served_by:{
         type:DataTypes.UUID,
         allowNull:true

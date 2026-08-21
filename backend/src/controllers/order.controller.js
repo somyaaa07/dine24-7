@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { Order, OrderItem, Tables, MenuVariant, MenuItem, ResturantProfile, AuditLog, sequelize } from '../models/index.js';
 import { consumeIngredients } from './recipe.controller.js';
+import { sendEMail } from '../utils/mailer.js';
 
 const genrateOrderNumber = async (tenant_id) => {
     const date = new Date();
@@ -632,6 +633,67 @@ export const getKOT = async (req, res) => {
 };
 
 // Customer bill/invoice - items + prices + tax + total
+const buildBillData = async (order, tenant_id) => {
+    const profile = await ResturantProfile.findOne({ where: { tenant_id } });
+
+    return {
+        restaurant_name: profile?.resturant_name || 'Restaurant',
+        currency_symbol: profile?.currency_symbol || '\u20b9',
+        order_number: order.order_number,
+        table: order.Table ? order.Table.table_number : 'Takeaway',
+        created_at: order.createdAt,
+        customer_name: order.customer_name,
+        customer_email: order.customer_email,
+        items: order.OrderItems.map(i => ({
+            name: i.name,
+            quantity: i.quantity,
+            unit_price: i.unit_price,
+            total_price: i.total_price
+        })),
+        subtotal: order.subtotal,
+        tax_amount: order.tax_amount,
+        discount_amount: order.discount_amount,
+        total_amount: order.final_amount || order.total_amount,
+        payment_method: order.payment_method,
+        payment_status: order.payment_status
+    };
+};
+
+const billHtml = (bill) => {
+    const rows = bill.items.map(i => `
+        <tr>
+            <td style="padding:6px 8px;border-bottom:1px solid #eee;">${i.name}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:center;">${i.quantity}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;">${bill.currency_symbol}${i.total_price}</td>
+        </tr>
+    `).join('');
+
+    return `
+    <div style="font-family:sans-serif;max-width:420px;margin:0 auto;color:#1A1815;">
+        <h2 style="margin-bottom:4px;">${bill.restaurant_name}</h2>
+        <p style="margin:0;color:#7A7264;font-size:13px;">Order #${bill.order_number} · ${bill.table}</p>
+        <p style="margin:0 0 12px;color:#7A7264;font-size:13px;">${new Date(bill.created_at).toLocaleString()}</p>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+                <tr>
+                    <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #1A1815;">Item</th>
+                    <th style="text-align:center;padding:6px 8px;border-bottom:2px solid #1A1815;">Qty</th>
+                    <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #1A1815;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>
+        <table style="width:100%;margin-top:8px;font-size:14px;">
+            <tr><td>Subtotal</td><td style="text-align:right;">${bill.currency_symbol}${bill.subtotal}</td></tr>
+            <tr><td>Tax</td><td style="text-align:right;">${bill.currency_symbol}${bill.tax_amount}</td></tr>
+            ${bill.discount_amount > 0 ? `<tr><td>Discount</td><td style="text-align:right;">-${bill.currency_symbol}${bill.discount_amount}</td></tr>` : ''}
+            <tr style="font-weight:700;font-size:16px;"><td>Total</td><td style="text-align:right;">${bill.currency_symbol}${bill.total_amount}</td></tr>
+        </table>
+        <p style="margin-top:16px;color:#7A7264;font-size:12px;">Thank you for dining with us!</p>
+    </div>
+    `;
+};
+
 export const getBill = async (req, res) => {
     try {
         const tenant_id = req.user.tenant_id;
@@ -649,32 +711,53 @@ export const getBill = async (req, res) => {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
 
-        const profile = await ResturantProfile.findOne({ where: { tenant_id } });
+        const bill = await buildBillData(order, tenant_id);
 
-        return res.status(200).json({
-            success: true,
-            data: {
-                restaurant_name: profile?.resturant_name || 'Restaurant',
-                currency_symbol: profile?.currency_symbol || '\u20b9',
-                order_number: order.order_number,
-                table: order.Table ? order.Table.table_number : 'Takeaway',
-                created_at: order.createdAt,
-                items: order.OrderItems.map(i => ({
-                    name: i.name,
-                    quantity: i.quantity,
-                    unit_price: i.unit_price,
-                    total_price: i.total_price
-                })),
-                subtotal: order.subtotal,
-                tax_amount: order.tax_amount,
-                discount_amount: order.discount_amount,
-                total_amount: order.final_amount || order.total_amount,
-                payment_method: order.payment_method,
-                payment_status: order.payment_status
-            }
-        });
+        return res.status(200).json({ success: true, data: bill });
     } catch (error) {
         console.log("getBill failed", error);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+// Email the bill to the customer - uses to_email from the request body if
+// given, otherwise falls back to whatever email the customer left when
+// ordering (e.g. via QR ordering).
+export const emailBill = async (req, res) => {
+    try {
+        const tenant_id = req.user.tenant_id;
+        const { id } = req.params;
+        const { to_email } = req.body;
+
+        const order = await Order.findOne({
+            where: { id, tenant_id },
+            include: [
+                { model: Tables, attributes: ['id', 'table_number'] },
+                { model: OrderItem, attributes: ['id', 'name', 'quantity', 'unit_price', 'total_price'] }
+            ]
+        });
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        const recipient = to_email || order.customer_email;
+        if (!recipient) {
+            return res.status(400).json({ success: false, message: "No email address available for this order. Provide 'to_email'." });
+        }
+
+        const bill = await buildBillData(order, tenant_id);
+        const html = billHtml(bill);
+
+        const sent = await sendEMail(recipient, `Your bill from ${bill.restaurant_name} - Order #${bill.order_number}`, html);
+
+        if (!sent) {
+            return res.status(502).json({ success: false, message: "Could not send email. Check email settings." });
+        }
+
+        return res.status(200).json({ success: true, message: `Bill emailed to ${recipient}` });
+    } catch (error) {
+        console.log("emailBill failed", error);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };

@@ -17,7 +17,7 @@ router.get('/:id/bill',authMiddleware,orderController.getBill);
 //post router
 router.post('/',authMiddleware,orderController.createOrder);
 router.post('/:id/items',authMiddleware,orderController.addItems);
-
+router.post('/:id/bill/email',authMiddleware,orderController.emailBill);
 //put router 
 router.put('/:id/status',authMiddleware,orderController.updateStatus);
 router.put('/:id/payment',authMiddleware,orderController.processPayment);
