@@ -9,7 +9,8 @@
     "db:migrate": "sequelize-cli db:migrate",
     "db:seed": "sequelize-cli db:seed:all",
     "db:reset": "sequelize-cli db:drop && sequelize-cli db:create && sequelize-cli db:migrate",
-    "create:super-admin": "node src/scripts/createSuperAdmin.js"
+    "create:super-admin": "node src/scripts/createSuperAdmin.js",
+    "sync-alter": "node src/scripts/sync-alter.js"
   },
   "keywords": [],
   "author": "",
