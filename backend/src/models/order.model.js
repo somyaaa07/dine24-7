@@ -13,6 +13,10 @@ Order.init({
         type: DataTypes.UUID,
         allowNull: false
     },
+    branch_id:{
+        type:DataTypes.UUID,
+        allowNull:true
+    },
     // table can be allowed to be null because it can be delivered
     table_id: {
         type: DataTypes.INTEGER,

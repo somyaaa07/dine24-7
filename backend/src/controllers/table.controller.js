@@ -4,7 +4,10 @@ export const getAllTables = async (req, res) => {
 
     try {
         const tenant_id = req.user.tenant_id;
-        const tables = await Table.findAll({ where: { tenant_id, is_active: true }, order: [['section', 'ASC'], ['table_number', 'ASC']] });
+        const { branch_id } = req.query;
+        const where = { tenant_id, is_active: true };
+        if (branch_id) where.branch_id = branch_id;
+        const tables = await Table.findAll({ where, order: [['section', 'ASC'], ['table_number', 'ASC']] });
 
         const grouped = tables.reduce((acc, table) => {
             const section = table.section || 'main section';
@@ -64,7 +67,7 @@ export const getTableById = async (req, res) => {
 export const createTable = async (req, res) => {
     try {
         const tenant_id = req.user.tenant_id;
-        const { table_number, capacity, section } = req.body;
+        const { table_number, capacity, section, branch_id } = req.body;
 
         if (!table_number) {
             return res.status(400).json({
@@ -94,6 +97,7 @@ export const createTable = async (req, res) => {
  const qr_code = `${process.env.APP_URL}/order?tenant_id=${tenant_id}&table=${table_number}`;
         const table = await Table.create({
             tenant_id,
+            branch_id: branch_id || null,
             table_number,
             capacity,
             section: section || 'Main Hall',
@@ -129,7 +133,7 @@ export const createTable = async (req, res) => {
 export const createBulkTable = async (req, res) => {
     try {
         const tenant_id = req.user.tenant_id;
-        const { section, capacity, prefix, from_number, to_number } = req.body;
+        const { section, capacity, prefix, from_number, to_number, branch_id } = req.body;
 
 
         if (!from_number || !to_number || from_number > to_number) {
@@ -167,6 +171,7 @@ export const createBulkTable = async (req, res) => {
 
             tablesToCreate.push({
                 tenant_id,
+                branch_id: branch_id || null,
                 table_number,
                 capacity: capacity || 4,
                 section: section || 'Main Hall',

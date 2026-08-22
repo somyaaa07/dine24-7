@@ -14,6 +14,10 @@ Tables.init(
         type:DataTypes.UUID,
         allowNull:false
     },
+    branch_id:{
+        type:DataTypes.UUID,
+        allowNull:true
+    },
     table_number:{
         type:DataTypes.STRING,
         allowNull:false

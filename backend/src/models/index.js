@@ -26,7 +26,7 @@ import Payroll from "./payroll.model.js";
 import Employee from "./employee.model.js";
 import Expense from "./expense.model.js";
 import Shift from "./shift.model.js";
-
+import Branch from "./branch.model.js";
 //relationship management
 
 //tenant and user realtionship as user belongs to tenant
@@ -177,7 +177,20 @@ Shift.hasMany(Employee,{foreignKey:"shift_id"});
 Employee.belongsTo(Shift,{foreignKey:"shift_id"});
 
 Shift.hasMany(Attendance,{foreignKey:"shift_id"});
-Attendance.belongsTo(Shift,{foreignKey:"shift_id"})
+Attendance.belongsTo(Shift,{foreignKey:"shift_id"});
+
+Tenant.hasMany(Branch,{foreignKey:"tenant_id"});
+Branch.belongsTo(Tenant,{foreignKey:"tenant_id"});
+
+Branch.hasMany(Tables,{foreignKey:"branch_id"});
+Tables.belongsTo(Branch,{foreignKey:"branch_id"});
+
+Branch.hasMany(InventoryItem,{foreignKey:"branch_id"});
+InventoryItem.belongsTo(Branch,{foreignKey:"branch_id"});
+
+Branch.hasMany(Order,{foreignKey:"branch_id"});
+Order.belongsTo(Branch,{foreignKey:"branch_id"});
+
 export {
   sequelize,
   Tenant,
@@ -186,6 +199,7 @@ export {
   RefreshToken,
   AuditLog,
   ResturantProfile,
+  Branch,
   Tables,
   MenuCategory,
   MenuItem,
