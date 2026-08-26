@@ -109,6 +109,50 @@ const BarChart = ({ title, icon, data, formatValue, barColor, trackColor }) => {
   );
 };
 
+// ── Animated radial/donut gauge — for single ratio metrics like occupancy ──
+const RadialGauge = ({ title, icon, value, max, centerLabel, sublabel, color, trackColor }) => {
+  const pct = max > 0 ? Math.min(value / max, 1) : 0;
+  const [animatedPct, setAnimatedPct] = useState(0);
+
+  useEffect(() => {
+    const t = setTimeout(() => setAnimatedPct(pct), 80);
+    return () => clearTimeout(t);
+  }, [pct]);
+
+  const r = 52;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference * (1 - animatedPct);
+
+  return (
+    <div style={styles.gaugeCard} className="rdash-card-hover">
+      <div style={styles.chartHeader}>
+        <span style={styles.chartIcon}>{icon}</span>
+        <span style={styles.chartTitle}>{title}</span>
+      </div>
+      <div style={styles.gaugeWrap}>
+        <svg width="126" height="126" viewBox="0 0 126 126">
+          <circle cx="63" cy="63" r={r} fill="none" stroke={trackColor} strokeWidth="11" />
+          <circle
+            cx="63" cy="63" r={r} fill="none"
+            stroke={color} strokeWidth="11" strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            transform="rotate(-90 63 63)"
+            style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(0.16, 1, 0.3, 1)' }}
+          />
+          <text x="63" y="59" textAnchor="middle" fontFamily="'Bebas Neue', sans-serif" fontSize="21" fill="#1A1815">
+            {centerLabel}
+          </text>
+          <text x="63" y="76" textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontSize="10" fill="#7A7264">
+            {Math.round(pct * 100)}%
+          </text>
+        </svg>
+      </div>
+      {sublabel && <p style={styles.anSub}>{sublabel}</p>}
+    </div>
+  );
+};
+
 const EmptyState = ({ icon, text }) => (
   <div style={styles.emptyState}>
     <span style={styles.emptyIcon}>{icon}</span>
@@ -171,6 +215,42 @@ const Dashboard = () => {
     };
     fetchAll();
   }, []);
+
+  // ── Derived chart data — reuses data we already fetched, no extra API calls ──
+  const topDishesChartData = useMemo(
+    () =>
+      (topDishes || [])
+        .slice(0, 5)
+        .map((d) => ({
+          label: String(d.dish_name || d.name || '').slice(0, 12) || '—',
+          value: Number(d.order_count || d.count || 0),
+        })),
+    [topDishes]
+  );
+
+  const reservationsChartData = useMemo(
+    () =>
+      (reservations || [])
+        .slice()
+        .sort((a, b) => String(a.reservation_time).localeCompare(String(b.reservation_time)))
+        .slice(0, 6)
+        .map((r) => ({
+          label: r.reservation_time,
+          value: Number(r.guests || 0),
+        })),
+    [reservations]
+  );
+
+  const lowStockChartData = useMemo(
+    () =>
+      (lowStock || [])
+        .slice(0, 5)
+        .map((item) => ({
+          label: String(item.name || item.item_name || '').slice(0, 12) || '—',
+          value: Number(item.current_quantity || 0),
+        })),
+    [lowStock]
+  );
 
   const handleLogout = async () => {
     try {
@@ -269,6 +349,7 @@ const Dashboard = () => {
       @media (max-width: 900px) {
         .rdash-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
         .rdash-an-grid   { grid-template-columns: 1fr !important; }
+        .rdash-perf-grid { grid-template-columns: 1fr !important; }
         .rdash-two-grid  { grid-template-columns: 1fr !important; }
       }
       @media (max-width: 560px) {
@@ -417,6 +498,53 @@ const Dashboard = () => {
           </>
         )}
 
+        {/* ── Performance — new charts, built from data we already fetch ── */}
+        {(topDishesChartData.length > 0 || reservationsChartData.length > 0 || stats) && (
+          <>
+            <div style={styles.sectionLabel}>Performance</div>
+            <div className="rdash-perf-grid" style={styles.perfGrid}>
+              {topDishesChartData.length > 0 && (
+                <BarChart
+                  title="Top Dishes"
+                  icon="🍽️"
+                  barColor="linear-gradient(90deg, #B8874B, #E6BE7E)"
+                  trackColor="#FBF3E6"
+                  data={topDishesChartData}
+                />
+              )}
+              {reservationsChartData.length > 0 && (
+                <BarChart
+                  title="Reservations by Time"
+                  icon="📅"
+                  barColor="linear-gradient(90deg, #5B7B9A, #92B4D1)"
+                  trackColor="#EAF0F5"
+                  data={reservationsChartData}
+                  formatValue={(v) => `${v} guests`}
+                />
+              )}
+              <RadialGauge
+                title="Table Occupancy"
+                icon="🪑"
+                value={stats?.active_tables || 0}
+                max={stats?.total_tables || 0}
+                centerLabel={`${stats?.active_tables || 0}/${stats?.total_tables || 0}`}
+                sublabel="active vs total tables"
+                color="#6E8F72"
+                trackColor="#EDF2EE"
+              />
+              {lowStockChartData.length > 0 && (
+                <BarChart
+                  title="Low Stock Levels"
+                  icon="⚠️"
+                  barColor="linear-gradient(90deg, #B33F2C, #D97B63)"
+                  trackColor="#FBEEEB"
+                  data={lowStockChartData}
+                />
+              )}
+            </div>
+          </>
+        )}
+
         {/* ── Low Stock + Reservations ──────────────────────── */}
         <div className="rdash-two-grid" style={styles.twoGrid}>
           <div style={styles.card}>
@@ -550,6 +678,8 @@ const styles = {
   anLabel: { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7A7264', margin: '0 0 6px' },
   anSub: { fontSize: '11px', color: '#B9B0A0', margin: '6px 0 0' },
 
+  perfGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '22px', alignItems: 'stretch' },
+
   chartCard: { background: '#fff', borderRadius: '8px', border: '1px solid #E9E3D6', padding: '16px 18px', boxShadow: '0 1px 2px rgba(26,24,21,0.03)' },
   chartHeader: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' },
   chartIcon: { fontSize: '14px' },
@@ -560,6 +690,9 @@ const styles = {
   chartTrack: { height: '10px', borderRadius: '5px', overflow: 'hidden', position: 'relative' },
   chartFill: { height: '100%', borderRadius: '5px', transition: 'width 0.9s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease' },
   chartRowValue: { fontSize: '12px', fontWeight: '700', color: '#1A1815', minWidth: '64px', textAlign: 'right' },
+
+  gaugeCard: { background: '#fff', borderRadius: '8px', border: '1px solid #E9E3D6', padding: '16px 18px', boxShadow: '0 1px 2px rgba(26,24,21,0.03)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' },
+  gaugeWrap: { display: 'flex', justifyContent: 'center', padding: '2px 0 4px' },
 
   aovCard: { background: 'linear-gradient(160deg, #1A1815, #2A2621)', borderRadius: '8px', padding: '18px', boxShadow: '0 1px 2px rgba(26,24,21,0.03)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
   aovClip: { position: 'absolute', top: 0, right: 0, width: '60px', height: '60px', background: 'radial-gradient(circle at top right, rgba(169,126,68,0.35), transparent 70%)' },

@@ -37,7 +37,10 @@ AuditLog.init({
             'RECIPE_CREATED', 'STOCK_ADJUSTED',
             'SUPPLIER_CREATED', 'SUPPLIER_DELETED',
             'PO_CREATED', 'PO_STATUS_UPDATED',
-            'INVENTORY_ITEM_CREATED'
+            'INVENTORY_ITEM_CREATED',
+            'BRANCH_STATUS_CHANGED_BY_SUPER_ADMIN',
+            'USER_STATUS_CHANGED_BY_SUPER_ADMIN',
+            'USER_ROLE_CHANGED_BY_SUPER_ADMIN'
         ), allowNull: false
     },
     ip_address: {
