@@ -23,7 +23,7 @@ import Employees       from './pages/Employee';
 import Expenses        from './pages/Expense';
 import Reports         from './pages/Reports';
 import Analytics       from './pages/Analytics';
-import SuperAdmin      from './pages/SuperAdmin';
+import SuperAdmin      from './pages/super-admin/SuperAdmin';
 import Orders          from './pages/Order';
 import QrOrder         from './pages/QrOrder';
 
